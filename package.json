@@ -1,0 +1,20 @@
+{
+  "name": "wa-ah-announce",
+  "version": "1.0.0",
+  "description": "A chat bot, forwarding announcement audios to an Allen & Heath mixer over a TCP stream.",
+  "author": "Johannes Garz <johannes@garz.dev> (https://garz.dev/)",
+  "main": "./build/index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node ./build/index.js",
+    "deploy": "npm run build && npm start",
+    "dev": "export NODE_ENV=development || set NODE_ENV=development&& ts-node-dev --respawn ./src/index.ts"
+  },
+  "devDependencies": {
+    "dotenv": "^16.3.1",
+    "ts-node": "^10.9.1",
+    "@types/node": "^20.3.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.6"
+  }
+}
