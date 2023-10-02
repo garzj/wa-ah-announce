@@ -1,53 +1,19 @@
-import { Socket } from 'net';
+import './config/logger';
 import './config/env';
+
 console.log(`Starting app in ${process.env.NODE_ENV} mode.`);
 
-const reconnectTimeoutStart = 1000;
-const reconnectTimeoutMult = 1.5;
-let reconnectTimeout = 0;
+import { AHConn } from './AHConn';
+import { WABot } from './WABot';
+import { Player } from './Player';
 
-const client = new Socket();
-
-function reconnect(callback?: () => void) {
-  client.connect(
-    {
-      host: process.env.AH_HOST,
-      port: parseInt(process.env.AH_PORT),
-    },
-    callback,
-  );
-}
-client.on('close', () => {
-  console.log(
-    `Connection closed. Trying to reconnect in ${reconnectTimeout / 1000}s.`,
-  );
-  setTimeout(reconnect, reconnectTimeout);
-  reconnectTimeout *= reconnectTimeoutMult;
+const ahConn = new AHConn({
+  host: process.env.AH_HOST,
+  port: parseInt(process.env.AH_PORT),
+  user: parseInt(process.env.AH_USER),
+  password: process.env.AH_PASSWORD,
 });
 
-reconnect(() => {
-  reconnectTimeout = reconnectTimeoutStart;
+const player = new Player(ahConn);
 
-  console.log('Connected. Logging in.');
-  client.write(Buffer.from([parseInt(process.env.AH_USER)]));
-  client.write(Buffer.from(process.env.AH_PASSWORD));
-});
-
-client.on('data', (data) => {
-  // todo: partial data
-  if (data.toString() === 'AuthOK') {
-    console.log('Authentication successful.');
-
-    test();
-  }
-});
-
-function test() {
-  // Recalls preset 00
-  client.write(Buffer.from([0xb0, 0x00, 0x00, 0xc0, 0x00]));
-}
-
-// const buffer = Buffer.from('')
-// client.on('data', data => {
-//   buffer = Buffer.from()
-// });
+WABot.new('wa-bot', player);
