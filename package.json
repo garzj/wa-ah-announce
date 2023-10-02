@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A chat bot, forwarding announcement audios to an Allen & Heath mixer over a TCP stream.",
   "author": "Johannes Garz <johannes@garz.dev> (https://garz.dev/)",
+  "license": "UNLICENSED",
   "main": "./build/index.js",
   "scripts": {
     "build": "tsc -p .",
