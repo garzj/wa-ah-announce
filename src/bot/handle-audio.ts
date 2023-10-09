@@ -14,14 +14,14 @@ export async function handleAudioMsg(
   await saving;
   this.savingMsgs.delete(id);
 
-  const buf = await downloadMediaMessage(
+  const stream = await downloadMediaMessage(
     message,
-    'buffer',
+    'stream',
     {},
     {
       logger: this.logger,
       reuploadRequest: this.sock.updateMediaMessage,
     },
   );
-  await writeFile(this.getAudioPath(id), buf);
+  await writeFile(this.getAudioPath(id), stream);
 }
