@@ -9,6 +9,7 @@ export class AHConn {
   reconnectTimeout = AHConn.reconnectTimeoutStart;
 
   client = new Socket();
+  destroyed = false;
 
   log(...data: any[]) {
     prefixedLog(this.prefix, ...data);
@@ -67,9 +68,17 @@ export class AHConn {
   }
 
   reconnect() {
+    if (this.destroyed) return;
+
     this.client.connect({
       host: this.config.host,
       port: this.config.port,
     });
+  }
+
+  destroy() {
+    this.destroyed = true;
+    this.client.removeAllListeners();
+    this.client.destroy();
   }
 }
