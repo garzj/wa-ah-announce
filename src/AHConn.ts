@@ -42,12 +42,9 @@ export class AHConn {
     });
 
     this.client.on('close', () => {
-      this.log(
-        `Connection closed. Trying to reconnect in ${
-          this.reconnectTimeout / 1000
-        }s.`,
-      );
-      setTimeout(() => this.reconnect(), this.reconnectTimeout);
+      const sTimeout = Math.round(this.reconnectTimeout / 1000);
+      this.log(`Connection closed. Trying to reconnect in ${sTimeout}s.`);
+      setTimeout(() => this.reconnect(), sTimeout * 1000);
       this.reconnectTimeout *= AHConn.reconnectTimeoutMult;
       this.reconnectTimeout = Math.min(
         this.reconnectTimeout,
