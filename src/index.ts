@@ -4,7 +4,7 @@ import './config/env';
 console.log(`Starting app in ${process.env.NODE_ENV} mode.`);
 
 import { AHConn } from './AHConn';
-import { WABot } from './WABot';
+import { WABot } from './bot/WABot';
 import { Player } from './Player';
 
 const ahConn = new AHConn({
