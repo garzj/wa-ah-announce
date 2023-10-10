@@ -41,8 +41,6 @@ function parseAlias(input: string) {
 }
 
 function parsePreset(input: string): number | undefined {
-  if (input === '*') return 0;
-
   const no = parseInt(input);
   if (isNaN(no)) return undefined;
   return no;

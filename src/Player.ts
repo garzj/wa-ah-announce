@@ -9,8 +9,9 @@ export class Player {
 
   async playAudio(preset: number, file: string): Promise<boolean> {
     if (!(await exists(file))) return false;
+    if (preset < 0 || preset > 499) return false;
 
-    // todo: send preset through ahConn
+    this.ahConn.recallPreset(preset);
 
     if (this.playing) {
       this.stopPlaying();

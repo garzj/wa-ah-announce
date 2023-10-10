@@ -1,7 +1,12 @@
 import { Socket } from 'net';
 import { prefixedErr, prefixedLog } from './config/logger';
+import { TypedEmitter } from 'tiny-typed-emitter';
 
-export class AHConn {
+interface Events {
+  authed: () => void;
+}
+
+export class AHConn extends TypedEmitter<Events> {
   static readonly reconnectTimeoutStart = 1000;
   static readonly reconnectTimeoutMult = 1.7;
   static readonly reconnectTimeoutMax = 3600000;
@@ -9,7 +14,23 @@ export class AHConn {
   reconnectTimeout = AHConn.reconnectTimeoutStart;
 
   client = new Socket();
+  authed = false;
   destroyed = false;
+
+  writePreset?: () => void;
+  recallPreset(preset: number) {
+    if (this.writePreset) {
+      this.off('authed', this.writePreset);
+    }
+
+    this.writePreset = () => {
+      const bank = Math.floor(preset / 128);
+      const ss = preset % 128;
+      this.client.write(Buffer.from([0xb0, 0x00, bank, 0xc0, ss]));
+    };
+    if (this.authed) this.writePreset();
+    this.on('authed', this.writePreset);
+  }
 
   log(...data: any[]) {
     prefixedLog(this.prefix, ...data);
@@ -28,6 +49,8 @@ export class AHConn {
     },
     private prefix = 'A&H',
   ) {
+    super();
+
     this.client.on('connect', () => {
       this.reconnectTimeout = AHConn.reconnectTimeoutStart;
       this.log('Connected. Logging in.');
@@ -43,6 +66,8 @@ export class AHConn {
     });
 
     this.client.on('close', () => {
+      this.authed = false;
+
       const sTimeout = Math.round(this.reconnectTimeout / 1000);
       this.log(`Connection closed. Trying to reconnect in ${sTimeout}s.`);
       setTimeout(() => this.reconnect(), sTimeout * 1000);
@@ -58,9 +83,8 @@ export class AHConn {
       if (data.toString() === 'AuthOK') {
         this.log('Authentication successful.');
 
-        // todo: remove this test
-        // Recalls preset 00
-        this.client.write(Buffer.from([0xb0, 0x00, 0x00, 0xc0, 0x00]));
+        this.authed = true;
+        this.emit('authed');
       }
     });
 
