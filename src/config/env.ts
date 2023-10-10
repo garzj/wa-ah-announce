@@ -29,7 +29,7 @@ function ensureVar(name: keyof Env) {
 }
 
 ensureVar('AH_HOST');
-process.env.PORT ??= '51325';
+process.env.AH_PORT ??= '51325';
 ensureVar('AH_USER');
 ensureVar('AH_PASSWORD');
 process.env.NODE_ENV ??= 'production';
