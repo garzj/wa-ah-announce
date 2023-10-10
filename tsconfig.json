@@ -9,7 +9,8 @@
     "typeRoots": ["node_modules/@types", "./typings"],
     "resolveJsonModule": true,
     "noImplicitAny": true,
-    "strict": true
+    "strict": true,
+    "skipLibCheck": true
   },
   "exclude": ["./node_modules", "./build"],
   "include": ["./src"]
