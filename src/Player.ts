@@ -7,7 +7,7 @@ export class Player {
 
   constructor(public ahConn: AHConn) {}
 
-  async playAudio(channel: number, file: string): Promise<boolean> {
+  async playAudio(preset: number, file: string): Promise<boolean> {
     if (!(await exists(file))) return false;
 
     // todo: send preset through ahConn

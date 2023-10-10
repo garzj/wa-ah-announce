@@ -27,20 +27,20 @@ export function getAliasList(aliasInput?: string) {
     .join('\n');
 }
 
-export function getChannelByInput(input: string): number | undefined {
-  let channel = parseChannel(input);
-  if (channel !== undefined) return channel;
+export function getPresetByInput(input: string): number | undefined {
+  let preset = parsePreset(input);
+  if (preset !== undefined) return preset;
 
   const alias = parseAlias(input);
-  channel = aliases[alias];
-  return channel;
+  preset = aliases[alias];
+  return preset;
 }
 
 function parseAlias(input: string) {
   return input.toLowerCase();
 }
 
-function parseChannel(input: string): number | undefined {
+function parsePreset(input: string): number | undefined {
   if (input === '*') return 0;
 
   const no = parseInt(input);
@@ -48,11 +48,11 @@ function parseChannel(input: string): number | undefined {
   return no;
 }
 
-export function setAlias(input: string, channelInput: string): boolean {
-  const channel = parseChannel(channelInput);
-  if (channel === undefined) return false;
+export function setAlias(input: string, presetInput: string): boolean {
+  const preset = parsePreset(presetInput);
+  if (preset === undefined) return false;
   const alias = parseAlias(input);
-  aliases[alias] = channel;
+  aliases[alias] = preset;
   saveAliases();
   return true;
 }

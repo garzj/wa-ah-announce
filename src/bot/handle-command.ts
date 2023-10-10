@@ -15,7 +15,7 @@ export async function handleCommand(
         '\n!help' +
         '\n!stop' +
         '\n!alias' +
-        '\n\nTo make an announcement, reply to media in this chat with the number of the channel or an alias.',
+        '\n\nTo make an announcement, reply to media in this chat with the number of a preset or an alias.',
     );
   } else if (cmd === 'stop') {
     await this.player.stopPlaying();
@@ -29,9 +29,9 @@ export async function handleCommand(
       );
     } else if (args[0] === 'set') {
       const alias = args[1];
-      const channel = args[2];
-      if (alias !== undefined && channel !== undefined) {
-        const suc = setAlias(alias, channel);
+      const preset = args[2];
+      if (alias !== undefined && preset !== undefined) {
+        const suc = setAlias(alias, preset);
         return await this.answer(
           message,
           suc ? 'Saved alias.' : 'This alias is invalid.',
@@ -50,7 +50,7 @@ export async function handleCommand(
 
     await this.answer(
       message,
-      'Usage: !alias <list|set|remove> [alias] [channel_no|*]',
+      'Usage: !alias <list|set|remove> [alias] [preset_no|*]',
     );
   } else {
     await this.answer(

@@ -1,7 +1,7 @@
 import { proto } from '@whiskeysockets/baileys';
 import { WABot } from './WABot';
 import { exists } from '../config/paths';
-import { getChannelByInput } from '../config/aliases';
+import { getPresetByInput } from '../config/aliases';
 
 export async function handleExtendedTextMsg(
   this: WABot,
@@ -24,22 +24,22 @@ export async function handleExtendedTextMsg(
     );
   }
 
-  const channel =
+  const preset =
     typeof extended.text === 'string'
-      ? getChannelByInput(extended.text)
+      ? getPresetByInput(extended.text)
       : undefined;
-  if (channel === undefined) {
+  if (preset === undefined) {
     return await this.answer(
       message,
-      "Invalid channel or alias specified. Won't play audio.",
+      "Invalid preset or alias specified. Won't play audio.",
     );
   }
 
-  const suc = await this.player.playAudio(channel, audioFile);
+  const suc = await this.player.playAudio(preset, audioFile);
   await this.answer(
     message,
     suc
-      ? `Playing audio on channel ${channel}.`
-      : `Failed to play audio on channel ${channel}.`,
+      ? `Playing audio on ${extended.text}.`
+      : `Failed to play audio with preset ${preset}.`,
   );
 }
