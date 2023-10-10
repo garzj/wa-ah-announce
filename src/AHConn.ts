@@ -55,6 +55,7 @@ export class AHConn extends TypedEmitter<Events> {
     this.client.on('connect', () => {
       this.reconnectTimeout = AHConn.reconnectTimeoutStart;
       if (!this.config.user) {
+        this.authed = true;
         this.emit('authed');
         return this.log('Connected without authentication.');
       }
@@ -110,5 +111,6 @@ export class AHConn extends TypedEmitter<Events> {
     this.destroyed = true;
     this.client.removeAllListeners();
     this.client.destroy();
+    this.removeAllListeners();
   }
 }
