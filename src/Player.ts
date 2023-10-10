@@ -9,7 +9,7 @@ export class Player {
 
   async playAudio(preset: number, file: string): Promise<boolean> {
     if (!(await exists(file))) return false;
-    if (preset < 0 || preset > 499) return false;
+    if (preset < 1 || preset > 500) return false;
 
     this.ahConn.recallPreset(preset);
 

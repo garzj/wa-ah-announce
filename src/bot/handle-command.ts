@@ -50,7 +50,7 @@ export async function handleCommand(
 
     await this.answer(
       message,
-      'Usage: !alias <list|set|remove> [alias] [0-499]',
+      'Usage: !alias <list|set|remove> [alias] [1-500]',
     );
   } else {
     await this.answer(

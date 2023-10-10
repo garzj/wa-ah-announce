@@ -24,8 +24,9 @@ export class AHConn extends TypedEmitter<Events> {
     }
 
     this.writePreset = () => {
-      const bank = Math.floor(preset / 128);
-      const ss = preset % 128;
+      const zPreset = preset - 1;
+      const bank = Math.floor(zPreset / 128);
+      const ss = zPreset % 128;
       this.client.write(Buffer.from([0xb0, 0x00, bank, 0xc0, ss]));
     };
     if (this.authed) this.writePreset();

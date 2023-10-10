@@ -43,6 +43,7 @@ function parseAlias(input: string) {
 function parsePreset(input: string): number | undefined {
   const no = parseInt(input);
   if (isNaN(no)) return undefined;
+  if (no < 1 || no > 500) return undefined;
   return no;
 }
 
