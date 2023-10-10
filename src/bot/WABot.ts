@@ -1,13 +1,12 @@
 import makeWASocket, {
   AnyMessageContent,
-  AuthenticationState,
   DisconnectReason,
   proto,
   useMultiFileAuthState,
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import { prefixedErr, prefixedLog } from '../config/logger';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import pino from 'pino';
 import { audioDir } from '../config/paths';
@@ -83,20 +82,11 @@ export class WABot {
   }
 
   static async new(prefix: string, player: Player) {
-    const authDir = join(process.env.DATA_DIR, 'baileys');
-    await mkdir(authDir, { recursive: true });
-    const { state, saveCreds } = await useMultiFileAuthState(authDir);
-    return new WABot(prefix, state, saveCreds, player);
+    const bot = new WABot(prefix, player);
+    await bot.setupSocket();
+    return bot;
   }
-
-  private constructor(
-    public prefix: string,
-    private state: AuthenticationState,
-    private saveCreds: () => Promise<void>,
-    public player: Player,
-  ) {
-    this.setupSocket();
-  }
+  private constructor(public prefix: string, public player: Player) {}
 
   log(...data: any[]) {
     prefixedLog(this.prefix, ...data);
@@ -106,13 +96,21 @@ export class WABot {
     prefixedErr(this.prefix, ...data);
   }
 
-  private setupSocket() {
+  async setupSocket() {
+    if (this.sock) {
+      this.sock.end(undefined);
+    }
+
+    const authDir = join(process.env.DATA_DIR, 'baileys');
+    await mkdir(authDir, { recursive: true });
+    const { state, saveCreds } = await useMultiFileAuthState(authDir);
+
     this.sock = makeWASocket({
-      auth: this.state,
+      auth: state,
       printQRInTerminal: true,
       logger: this.logger,
     });
-    this.sock.ev.on('creds.update', this.saveCreds);
+    this.sock.ev.on('creds.update', saveCreds);
 
     this.setupEvents();
 
@@ -124,8 +122,13 @@ export class WABot {
       const { connection, lastDisconnect } = update;
       if (connection === 'close') {
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+
+        if (statusCode === DisconnectReason.restartRequired) {
+          return this.setupSocket();
+        }
+
         const loggedOut = statusCode === DisconnectReason.loggedOut;
-        this.log(
+        this.errLog(
           'Connection closed due to ',
           lastDisconnect?.error,
           ',',
@@ -133,15 +136,12 @@ export class WABot {
         );
         if (loggedOut) return;
 
-        this.log(lastDisconnect?.error?.name);
-        if (statusCode === DisconnectReason.restartRequired) {
-          this.sock.end(undefined);
-          this.setupSocket();
-          return;
-        }
-        this.connect();
+        // this.connect();
+        this.setupSocket();
       } else if (connection === 'open') {
         this.log('Connection opened.');
+
+        this.sock.sendPresenceUpdate('unavailable');
       }
     });
   }
