@@ -13,11 +13,21 @@ export class Player {
     // todo: send preset through ahConn
 
     if (this.playing) {
-      this.playing.kill();
+      this.stopPlaying();
     }
 
     this.playing = spawn('ffplay', ['-nodisp', '-autoexit', file]);
+    this.playing.on('exit', () => {
+      this.playing = null;
+    });
 
     return true;
+  }
+
+  async stopPlaying() {
+    if (!this.playing) return;
+    this.playing.removeAllListeners();
+    this.playing.kill();
+    this.playing = null;
   }
 }

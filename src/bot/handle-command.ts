@@ -13,9 +13,13 @@ export async function handleCommand(
       message,
       'Possible commands are:' +
         '\n!help' +
+        '\n!stop' +
         '\n!alias' +
         '\n\nTo make an announcement, reply to media in this chat with the number of the channel or an alias.',
     );
+  } else if (cmd === 'stop') {
+    await this.player.stopPlaying();
+    await this.answer(message, 'Stopped playing audio.');
   } else if (cmd === 'alias') {
     if (args[0] === 'list') {
       const list = getAliasList(args[1]);
