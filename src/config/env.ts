@@ -30,14 +30,18 @@ function ensureVar(name: keyof Env) {
 
 ensureVar('AH_HOST');
 process.env.AH_PORT ??= '51325';
-ensureVar('AH_USER');
-ensureVar('AH_PASSWORD');
+process.env.AH_USER ??= '';
+process.env.AH_PASSWORD ??= '';
 process.env.NODE_ENV ??= 'production';
 process.env.DATA_DIR ??= './data';
 
-const user = parseInt(process.env.AH_USER);
-if (isNaN(user) || user < 0 || user > 31) {
-  errs.push(`The variable AH_USER has to be a value from 0 to 31 inclusive.`);
+if (process.env.AH_USER) {
+  const user = parseInt(process.env.AH_USER);
+  if (isNaN(user) || user < 0 || user > 31) {
+    errs.push(`The variable AH_USER has to be a value from 0 to 31 inclusive.`);
+  }
+} else {
+  console.log('The variable AH_USER is empty, skipping authentication.');
 }
 
 if (errs.length > 0) {

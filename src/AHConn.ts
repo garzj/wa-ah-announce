@@ -27,7 +27,7 @@ export class AHConn extends TypedEmitter<Events> {
       const zPreset = preset - 1;
       const bank = Math.floor(zPreset / 128);
       const ss = zPreset % 128;
-      this.client.write(Buffer.from([0xb0, 0x00, bank, 0xc0, ss]));
+      this.client.write(Buffer.from([0xf0, 0xb0, 0x00, bank, 0xc0, ss]));
     };
     if (this.authed) this.writePreset();
     this.on('authed', this.writePreset);
@@ -45,8 +45,8 @@ export class AHConn extends TypedEmitter<Events> {
     private config: {
       host: string;
       port: number;
-      user: number;
-      password: string;
+      user?: number;
+      password?: string;
     },
     private prefix = 'A&H',
   ) {
@@ -54,9 +54,13 @@ export class AHConn extends TypedEmitter<Events> {
 
     this.client.on('connect', () => {
       this.reconnectTimeout = AHConn.reconnectTimeoutStart;
+      if (!this.config.user) {
+        this.emit('authed');
+        return this.log('Connected without authentication.');
+      }
       this.log('Connected. Logging in.');
-      this.client.write(Buffer.from([this.config.user]));
-      this.client.write(Buffer.from(this.config.password));
+      this.client.write(Buffer.from([0xf0, this.config.user]));
+      this.client.write(Buffer.from(this.config.password || ''));
     });
 
     this.client.on('error', (err) => {
@@ -81,7 +85,8 @@ export class AHConn extends TypedEmitter<Events> {
 
     this.client.on('data', (data) => {
       // todo: partial data?
-      if (data.toString() === 'AuthOK') {
+
+      if (data.toString().slice(1) === 'AuthOK') {
         this.log('Authentication successful.');
 
         this.authed = true;
