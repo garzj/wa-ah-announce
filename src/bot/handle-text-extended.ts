@@ -2,7 +2,6 @@ import { proto } from '@whiskeysockets/baileys';
 import { WABot } from './WABot';
 import { exists } from '../config/paths';
 import { getChannelByInput } from '../config/aliases';
-import { readFile } from 'fs/promises';
 
 export async function handleExtendedTextMsg(
   this: WABot,
@@ -36,8 +35,7 @@ export async function handleExtendedTextMsg(
     );
   }
 
-  const buf = await readFile(audioFile);
-  const suc = await this.player.playAudio(channel, buf);
+  const suc = await this.player.playAudio(channel, audioFile);
   await this.answer(
     message,
     suc

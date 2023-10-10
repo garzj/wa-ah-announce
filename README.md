@@ -26,6 +26,10 @@ AH_HOST=69.42.0.1
 AH_USER=31
 AH_PASSWORD=supersecurepassword
 DATA_DIR=./data
+
+# ffplay
+SDL_AUDIODRIVER=alsa
+AUDIODEV=plughw:RAVENNA # aes67-daemon loopback device
 ```
 
 ## Run the app

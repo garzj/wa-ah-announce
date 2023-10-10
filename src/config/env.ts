@@ -10,6 +10,8 @@ interface Env {
   AH_PASSWORD: string;
   DATA_DIR: string;
   NODE_ENV: 'development' | 'production' | 'test';
+  SDL_AUDIODRIVER?: string;
+  AUDIODEV?: string;
 }
 
 declare global {
