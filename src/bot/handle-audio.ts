@@ -3,8 +3,6 @@ import { WABot } from './WABot';
 import { readdir, stat, unlink, writeFile } from 'fs/promises';
 import { audioDir } from '../config/paths';
 
-const maxAudioFiles = 100;
-
 export async function handleAudioMsg(
   this: WABot,
   message: proto.IWebMessageInfo,
@@ -30,7 +28,7 @@ export async function handleAudioMsg(
 
   // Delete old media
   const files = await readdir(audioDir);
-  if (files.length > maxAudioFiles) {
+  if (files.length > parseInt(process.env.MAX_AUDIO_FILES)) {
     let oldestTime: Date | undefined;
     let oldestFile: string | null = null;
     await Promise.all(

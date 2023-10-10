@@ -10,6 +10,8 @@ interface Env {
   AH_PASSWORD: string;
   DATA_DIR: string;
   NODE_ENV: 'development' | 'production' | 'test';
+  MAX_AUDIO_FILES: string;
+  AUDIO_START_DELAY: string;
   SDL_AUDIODRIVER?: string;
   AUDIODEV?: string;
 }
@@ -32,8 +34,18 @@ ensureVar('AH_HOST');
 process.env.AH_PORT ??= '51325';
 process.env.AH_USER ??= '';
 process.env.AH_PASSWORD ??= '';
-process.env.NODE_ENV ??= 'production';
 process.env.DATA_DIR ??= './data';
+process.env.NODE_ENV ??= 'production';
+process.env.MAX_AUDIO_FILES ??= '100';
+process.env.AUDIO_START_DELAY ??= '3000';
+
+if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
+  errs.push('The variable MAX_AUDIO_FILES should be an integer.');
+}
+
+if (isNaN(parseInt(process.env.AUDIO_START_DELAY))) {
+  errs.push('The variable AUDIO_START_DELAY should be an integer.');
+}
 
 if (process.env.AH_USER) {
   const user = parseInt(process.env.AH_USER);
