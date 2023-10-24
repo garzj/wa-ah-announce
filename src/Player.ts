@@ -1,6 +1,7 @@
 import { AHConn } from './AHConn';
 import { ChildProcess, spawn } from 'child_process';
 import { exists } from './config/paths';
+import { resolve } from 'path';
 
 export class Player {
   playing: NodeJS.Timeout | ChildProcess | null = null;
@@ -20,9 +21,11 @@ export class Player {
     this.stopPlaying();
 
     this.playing = setTimeout(() => {
-      this.playing = spawn(
-        `cvlc '${file.replace("'", '')}' ${process.env.CVLC_ARGS}`,
-      );
+      // todo: sanitize
+      this.playing = spawn('sh', [
+        '-c',
+        `/usr/bin/cvlc ${resolve(file)} ${process.env.CVLC_ARGS}`,
+      ]);
       this.playing.on('exit', () => {
         this.playing = null;
       });
