@@ -37,7 +37,7 @@ export class Player {
   async stopPlaying() {
     if (this.playing === null) return;
 
-    if (this.playing instanceof NodeJS.Timeout) {
+    if (!(this.playing instanceof ChildProcess)) {
       clearTimeout(this.playing);
     } else {
       this.playing.removeAllListeners();
