@@ -6,7 +6,7 @@ It uses the [aes67-linux-daemon](https://github.com/bondagit/aes67-linux-daemon)
 
 ## Setup
 
-- install [ffmpeg](https://ffmpeg.org/)
+- install [vlc](https://www.videolan.org/vlc/index.de.html)
 - ```
   git clone
   cd wa-ah-announce
@@ -30,9 +30,8 @@ DATA_DIR=./data
 MAX_AUDIO_FILES=100
 AUDIO_START_DELAY=3000
 
-# ffplay
-SDL_AUDIODRIVER=alsa
-AUDIODEV=plughw:RAVENNA # aes67-daemon loopback device
+# vlc stream
+CVLC_ARGS="--sout '#transcode{vcodec=mp2v,vb=800,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{dst=192.168.2.8,port=5004,mux=ts,sap,name=Announcement}' --no-sout-all --sout-keep"
 ```
 
 ## Run the app

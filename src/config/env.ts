@@ -12,8 +12,7 @@ interface Env {
   NODE_ENV: 'development' | 'production' | 'test';
   MAX_AUDIO_FILES: string;
   AUDIO_START_DELAY: string;
-  SDL_AUDIODRIVER?: string;
-  AUDIODEV?: string;
+  CVLC_ARGS: string;
 }
 
 declare global {
@@ -38,6 +37,7 @@ process.env.DATA_DIR ??= './data';
 process.env.NODE_ENV ??= 'production';
 process.env.MAX_AUDIO_FILES ??= '100';
 process.env.AUDIO_START_DELAY ??= '3000';
+ensureVar('CVLC_ARGS');
 
 if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
   errs.push('The variable MAX_AUDIO_FILES should be an integer.');

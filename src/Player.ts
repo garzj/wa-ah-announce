@@ -20,7 +20,9 @@ export class Player {
     this.stopPlaying();
 
     this.playing = setTimeout(() => {
-      this.playing = spawn('ffplay', ['-nodisp', '-autoexit', file]);
+      this.playing = spawn(
+        `cvlc '${file.replace("'", '')}' ${process.env.CVLC_ARGS}`,
+      );
       this.playing.on('exit', () => {
         this.playing = null;
       });
