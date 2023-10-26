@@ -1,6 +1,8 @@
 import makeWASocket, {
   AnyMessageContent,
   DisconnectReason,
+  WAMessageKey,
+  makeInMemoryStore,
   proto,
   useMultiFileAuthState,
 } from '@whiskeysockets/baileys';
@@ -19,6 +21,8 @@ import { handleAudioMsg } from './handle-audio';
 export class WABot {
   logger = pino({ level: 'silent' });
   sock!: ReturnType<typeof makeWASocket>;
+  storeSaveInterval: NodeJS.Timeout | null = null;
+  store: ReturnType<typeof makeInMemoryStore> | null = null;
 
   savingMsgs = new Map<string, Promise<void>>();
 
@@ -30,6 +34,14 @@ export class WABot {
   handleExtendedTextMsg = handleExtendedTextMsg;
   handleTextMsg = handleTextMsg;
   handleCommand = handleCommand;
+
+  async getMessage(key: WAMessageKey) {
+    if (this.store) {
+      const msg = await this.store.loadMessage(key.remoteJid!, key.id!);
+      return msg?.message || undefined;
+    }
+    return proto.Message.fromObject({});
+  }
 
   async answer(
     message: proto.IWebMessageInfo,
@@ -97,11 +109,24 @@ export class WABot {
   }
 
   async setupSocket() {
+    const storeFile = join(
+      process.env.DATA_DIR,
+      'baileys',
+      `${this.prefix}-store.json`,
+    );
+    if (this.store) {
+      if (this.storeSaveInterval !== null) {
+        clearInterval(this.storeSaveInterval);
+        this.storeSaveInterval = null;
+      }
+      this.store.writeToFile(storeFile);
+    }
+
     if (this.sock) {
       this.sock.end(undefined);
     }
 
-    const authDir = join(process.env.DATA_DIR, 'baileys');
+    const authDir = join(process.env.DATA_DIR, 'baileys', this.prefix);
     await mkdir(authDir, { recursive: true });
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
@@ -109,8 +134,16 @@ export class WABot {
       auth: state,
       printQRInTerminal: true,
       logger: this.logger,
+      getMessage: this.getMessage.bind(this),
     });
     this.sock.ev.on('creds.update', saveCreds);
+
+    this.store = makeInMemoryStore({ logger: this.logger });
+    this.store.readFromFile(storeFile);
+    this.storeSaveInterval = setInterval(() => {
+      this.store?.writeToFile(storeFile);
+    });
+    this.store.bind(this.sock.ev);
 
     this.setupEvents();
 
