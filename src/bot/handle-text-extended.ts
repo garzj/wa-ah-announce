@@ -8,8 +8,12 @@ export async function handleExtendedTextMsg(
   extended: proto.Message.IExtendedTextMessage,
   message: proto.IWebMessageInfo,
 ) {
+  console.log('why extended');
   const quotedId = extended.contextInfo?.stanzaId;
-  if (!quotedId) return;
+  if (!quotedId) {
+    if (extended.text) this.handleTextMsg(extended.text, message);
+    return;
+  }
 
   if (!extended.contextInfo?.quotedMessage?.audioMessage) {
     return await this.answer(message, 'The quoted message is not an audio.');
