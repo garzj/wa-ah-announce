@@ -19,6 +19,10 @@ export class AHConn extends TypedEmitter<Events> {
 
   writePreset?: () => void;
   recallPreset(preset: number) {
+    if (process.env.AH_MOCK === 'true') {
+      return this.log(`Preset ${preset} has been recalled.`);
+    }
+
     if (this.writePreset) {
       this.off('authed', this.writePreset);
     }
@@ -95,6 +99,12 @@ export class AHConn extends TypedEmitter<Events> {
       }
     });
 
+    if (process.env.AH_MOCK === 'true') {
+      this.log(
+        "Won't connect to the Dante receiver, because AH_MOCK has been set.",
+      );
+      return;
+    }
     this.reconnect();
   }
 

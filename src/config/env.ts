@@ -4,6 +4,7 @@ try {
 } catch {}
 
 interface Env {
+  AH_MOCK?: 'true' | 'false';
   AH_HOST: string;
   AH_PORT: string;
   AH_USER: string;
@@ -45,6 +46,12 @@ if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
 
 if (isNaN(parseInt(process.env.AUDIO_START_DELAY))) {
   errs.push('The variable AUDIO_START_DELAY should be an integer.');
+}
+
+if (!['true', 'false', undefined].includes(process.env.AH_MOCK)) {
+  errs.push(
+    'The variable AH_MOCK has to be one either true, false or undefined.',
+  );
 }
 
 if (process.env.AH_USER) {

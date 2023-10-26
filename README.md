@@ -18,7 +18,7 @@ It uses the [aes67-linux-daemon](https://github.com/bondagit/aes67-linux-daemon)
 
 ### Configuration
 
-The app is configured via environment variables. Here is an example `.env` file:
+The app is configured via environment variables listed in [this file](./src/config/env.ts). Here is an example `.env` file:
 
 ```
 # application
