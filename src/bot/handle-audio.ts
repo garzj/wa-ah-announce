@@ -9,22 +9,23 @@ export async function handleAudioMsg(
   const id = message.key.id;
   if (!id) return;
 
-  const saving = (async () => {})();
+  const audioFile = this.getAudioPath(id);
+
+  const saving = (async () => {
+    const stream = await downloadMediaMessage(
+      message,
+      'stream',
+      {},
+      {
+        logger: this.logger,
+        reuploadRequest: this.sock.updateMediaMessage,
+      },
+    );
+    await writeFile(audioFile, stream);
+  })();
   this.savingMsgs.set(id, saving);
   await saving;
   this.savingMsgs.delete(id);
-
-  const stream = await downloadMediaMessage(
-    message,
-    'stream',
-    {},
-    {
-      logger: this.logger,
-      reuploadRequest: this.sock.updateMediaMessage,
-    },
-  );
-  const audioFile = this.getAudioPath(id);
-  await writeFile(audioFile, stream);
 
   await this.sendRoomPoll(message.key.remoteJid!, audioFile);
 
