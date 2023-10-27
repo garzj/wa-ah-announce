@@ -33,7 +33,7 @@ export class WABot {
   logger = pino({ level: 'silent' });
   sock!: ReturnType<typeof makeWASocket>;
   private destroyed = false;
-  private onProcExit: () => void;
+  private onProcExit: NodeJS.ExitListener;
   meId!: string;
   store!: ReturnType<typeof makeInMemoryStore>;
   state!: BotState;
@@ -149,7 +149,10 @@ export class WABot {
     public player: Player,
     private dataDir = join(process.env.DATA_DIR, prefix),
   ) {
-    this.onProcExit = () => this.destroy();
+    this.onProcExit = (no) => {
+      this.destroy();
+      process.exit(no);
+    };
     process.on('exit', this.onProcExit);
     process.on('SIGINT', this.onProcExit);
     process.on('uncaughtException', this.onProcExit);
