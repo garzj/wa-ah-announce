@@ -7,7 +7,6 @@ export async function handleExtendedTextMsg(
   extended: proto.Message.IExtendedTextMessage,
   message: proto.IWebMessageInfo,
 ) {
-  console.log('why extended');
   const quotedId = extended.contextInfo?.stanzaId;
   if (!quotedId) {
     if (extended.text) this.handleTextMsg(extended.text, message);
