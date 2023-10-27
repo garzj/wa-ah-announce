@@ -13,45 +13,42 @@ export async function handleCommand(
       'Possible commands are:' +
         '\n!help' +
         '\n!stop' +
-        '\n!alias' +
+        '\n!room' +
         '\n!whitelist' +
-        '\n\nTo make an announcement, reply to media in this chat with the number of a preset or an alias.',
+        '\n\nTo make an announcement, reply to media in this chat with the number of a preset or a room name.',
     );
   } else if (cmd === 'stop') {
     await this.player.stopPlaying();
     await this.answer(message, 'Stopped playing audio.');
-  } else if (cmd === 'alias') {
+  } else if (cmd === 'room') {
     if (args[0] === 'list') {
-      const list = this.getAliasList(args[1]);
+      const list = this.getRoomList(args[1]);
       return await this.answer(
         message,
-        list === '' ? 'Found no aliases.' : 'Found aliases:\n' + list,
+        list === '' ? 'Found no rooms.' : 'Found rooms:\n' + list,
       );
     } else if (args[0] === 'set') {
-      const alias = args[1];
+      const room = args[1];
       const preset = args[2];
-      if (alias !== undefined && preset !== undefined) {
-        const suc = this.setAlias(alias, preset);
+      if (room !== undefined && preset !== undefined) {
+        const suc = this.setRoom(room, preset);
         return await this.answer(
           message,
-          suc ? 'Saved alias.' : 'This alias is invalid.',
+          suc ? 'Saved room.' : 'This room is invalid.',
         );
       }
     } else if (args[0] === 'remove' || args[0] === 'delete') {
-      const alias = args[1];
-      if (alias !== undefined) {
-        const suc = this.deleteAlias(alias);
+      const room = args[1];
+      if (room !== undefined) {
+        const suc = this.deleteRoom(room);
         return await this.answer(
           message,
-          suc ? 'Removed alias.' : "The specified alias doesn't exist.",
+          suc ? 'Removed room.' : "The specified room doesn't exist.",
         );
       }
     }
 
-    await this.answer(
-      message,
-      'Usage: !alias <list|set|remove> [alias] [1-500]',
-    );
+    await this.answer(message, 'Usage: !room <list|set|remove> [room] [1-500]');
   } else if (cmd === 'whitelist') {
     if (this.state.whitelistGroupId !== undefined) {
       const meta = await this.store.fetchGroupMetadata(

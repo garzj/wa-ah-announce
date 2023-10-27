@@ -19,17 +19,12 @@ import { handleCommand } from './handle-command';
 import { handleTextMsg } from './handle-text';
 import { handleAudioMsg } from './handle-audio';
 import { writeFile } from 'fs/promises';
-import {
-  getAliasList,
-  getPresetByInput,
-  setAlias,
-  deleteAlias,
-} from './aliases';
+import { getRoomList, getPresetByInput, setRoom, deleteRoom } from './rooms';
 import { setupWhitelistEvent } from './whitelist';
 import { writeFileSync } from 'fs';
 
 export interface BotState {
-  aliases: Record<string, number>;
+  rooms: Record<string, number>;
   whitelistGroupId?: string;
   whitelistSetupJid?: string;
 }
@@ -59,10 +54,10 @@ export class WABot {
 
   setupWhitelistEvents = setupWhitelistEvent;
 
-  getAliasList = getAliasList;
+  getRoomList = getRoomList;
   getPresetByInput = getPresetByInput;
-  setAlias = setAlias;
-  deleteAlias = deleteAlias;
+  setRoom = setRoom;
+  deleteRoom = deleteRoom;
 
   handleAudioMsg = handleAudioMsg;
   handleExtendedTextMsg = handleExtendedTextMsg;
@@ -199,7 +194,7 @@ export class WABot {
     if (await exists(this.stateFile)) {
       this.state = JSON.parse((await readFile(this.stateFile)).toString());
     } else {
-      this.state = { aliases: {} };
+      this.state = { rooms: {} };
     }
 
     this.saveInterval = setInterval(() => {

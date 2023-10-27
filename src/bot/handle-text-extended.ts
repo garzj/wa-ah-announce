@@ -33,7 +33,7 @@ export async function handleExtendedTextMsg(
   if (preset === undefined) {
     return await this.answer(
       message,
-      "Invalid preset or alias specified. Won't play audio.",
+      "Invalid room or preset specified. Won't play audio.",
     );
   }
 
