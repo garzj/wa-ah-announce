@@ -18,7 +18,7 @@ import { handleExtendedTextMsg } from './handle-text-extended';
 import { handleCommand } from './handle-command';
 import { handleTextMsg } from './handle-text';
 import { handleAudioMsg } from './handle-audio';
-import { NoParamCallback, writeFile } from 'fs';
+import { writeFile } from 'fs/promises';
 import {
   getAliasList,
   getPresetByInput,
@@ -26,6 +26,7 @@ import {
   deleteAlias,
 } from './aliases';
 import { setupWhitelistEvent } from './whitelist';
+import { writeFileSync } from 'fs';
 
 export interface BotState {
   aliases: Record<string, number>;
@@ -36,9 +37,13 @@ export interface BotState {
 export class WABot {
   logger = pino({ level: 'silent' });
   sock!: ReturnType<typeof makeWASocket>;
+  private destroyed = false;
+  private onProcExit: () => void;
   meId!: string;
   store!: ReturnType<typeof makeInMemoryStore>;
   state!: BotState;
+  private storeFile = join(this.dataDir, `store.json`);
+  private stateFile = join(this.dataDir, `state.json`);
   private saveInterval: NodeJS.Timeout | null = null;
 
   savingMsgs = new Map<string, Promise<void>>();
@@ -148,7 +153,12 @@ export class WABot {
     public prefix: string,
     public player: Player,
     private dataDir = join(process.env.DATA_DIR, prefix),
-  ) {}
+  ) {
+    this.onProcExit = () => this.destroy();
+    process.on('exit', this.onProcExit);
+    process.on('SIGINT', this.onProcExit);
+    process.on('uncaughtException', this.onProcExit);
+  }
 
   log(...data: any[]) {
     prefixedLog(this.prefix, ...data);
@@ -158,46 +168,48 @@ export class WABot {
     prefixedErr(this.prefix, ...data);
   }
 
-  private writeStoreAndState(storeFile: string, stateFile: string) {
-    const errCb: NoParamCallback = (err) => {
-      if (!err) return;
+  private async writeStoreAndState(sync = false) {
+    const write = sync ? writeFileSync : writeFile;
+    try {
+      this.store &&
+        (await write(this.storeFile, JSON.stringify(this.store.toJSON())));
+      this.state && (await write(this.stateFile, JSON.stringify(this.state)));
+    } catch (err) {
       this.errLog(`Warning: Failed to save state or store: ${err}`);
-    };
-    this.store &&
-      writeFile(storeFile, JSON.stringify(this.store.toJSON()), errCb);
-    this.state && writeFile(stateFile, JSON.stringify(this.state), errCb);
+    }
   }
 
   private async reloadStoreAndState() {
-    const storeFile = join(this.dataDir, `store.json`);
-    const stateFile = join(this.dataDir, `state.json`);
-
     if (this.store || this.state) {
       if (this.saveInterval !== null) {
         clearInterval(this.saveInterval);
         this.saveInterval = null;
       }
-      this.writeStoreAndState(storeFile, stateFile);
+      this.writeStoreAndState();
     }
 
     this.store = makeInMemoryStore({ logger: this.logger });
-    if (await exists(storeFile)) {
-      this.store.fromJSON(JSON.parse((await readFile(storeFile)).toString()));
+    if (await exists(this.storeFile)) {
+      this.store.fromJSON(
+        JSON.parse((await readFile(this.storeFile)).toString()),
+      );
     }
     this.store.bind(this.sock.ev);
 
-    if (await exists(stateFile)) {
-      this.state = JSON.parse((await readFile(stateFile)).toString());
+    if (await exists(this.stateFile)) {
+      this.state = JSON.parse((await readFile(this.stateFile)).toString());
     } else {
       this.state = { aliases: {} };
     }
 
     this.saveInterval = setInterval(() => {
-      this.writeStoreAndState(storeFile, stateFile);
+      this.writeStoreAndState();
     }, 10_000);
   }
 
   async setupSocket() {
+    if (this.destroyed) return;
+
     if (this.sock) {
       this.sock.end(undefined);
     }
@@ -218,11 +230,13 @@ export class WABot {
 
     this.setupEvents();
 
-    this.connect();
+    this.setupConn();
   }
 
-  connect() {
+  private setupConn() {
     this.sock.ev.on('connection.update', (update) => {
+      if (this.destroyed) return;
+
       const { connection, lastDisconnect } = update;
       if (connection === 'close') {
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
@@ -253,5 +267,19 @@ export class WABot {
         this.sock.sendPresenceUpdate('unavailable');
       }
     });
+  }
+
+  destroy() {
+    if (this.destroyed) return;
+    this.destroyed = true;
+
+    process.off('exit', this.onProcExit);
+    process.off('SIGINT', this.onProcExit);
+    process.off('uncaughtException', this.onProcExit);
+
+    this.whitelistSetupTimeout && clearTimeout(this.whitelistSetupTimeout);
+    this.writeStoreAndState(true);
+
+    this.sock.end(undefined);
   }
 }
