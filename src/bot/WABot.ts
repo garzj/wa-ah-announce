@@ -2,6 +2,7 @@ import makeWASocket, {
   AnyMessageContent,
   DisconnectReason,
   WAMessageKey,
+  jidNormalizedUser,
   makeInMemoryStore,
   proto,
   useMultiFileAuthState,
@@ -247,7 +248,7 @@ export class WABot {
           this.errLog('No user object on socket after login? Exiting');
           return;
         }
-        this.meId = this.sock.user.id;
+        this.meId = jidNormalizedUser(this.sock.user.id);
 
         this.sock.sendPresenceUpdate('unavailable');
       }
