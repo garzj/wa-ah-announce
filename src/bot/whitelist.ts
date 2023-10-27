@@ -4,6 +4,7 @@ export function setupWhitelistEvent(this: WABot) {
   this.sock.ev.on('groups.upsert', async (metas) => {
     for (const meta of metas) {
       if (this.state.whitelistSetupJid === undefined) return;
+      if (this.state.whitelistGroupId !== undefined) return;
       if (meta.author !== this.state.whitelistSetupJid) return;
       this.whitelistSetupTimeout = null;
 
