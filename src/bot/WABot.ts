@@ -141,6 +141,8 @@ export class WABot {
 
   static async new(prefix: string, player: Player, dataDir?: string) {
     const bot = new WABot(prefix, player, dataDir);
+    await mkdir(bot.dataDir, { recursive: true });
+    await mkdir(bot.getAudioDir(), { recursive: true });
     await bot.setupSocket();
     return bot;
   }
@@ -278,6 +280,8 @@ export class WABot {
     this.whitelistSetupTimeout && clearTimeout(this.whitelistSetupTimeout);
     this.writeStoreAndState(true);
 
+    if (this.sock) {
     this.sock.end(undefined);
+    }
   }
 }
