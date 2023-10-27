@@ -42,3 +42,7 @@ CVLC_ARGS="--sout '#transcode{vcodec=mp2v,vb=800,acodec=mpga,ab=128,channels=2,s
 ```
 yarn start
 ```
+
+## Usage
+
+Login to a whatsapp account via the QR code and send it `!help` for a list of commands.
