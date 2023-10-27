@@ -24,9 +24,12 @@ import {
   setAlias,
   deleteAlias,
 } from './aliases';
+import { setupWhitelistEvent } from './whitelist';
 
 export interface BotState {
   aliases: Record<string, number>;
+  whitelistGroupId?: string;
+  whitelistSetupJid?: string;
 }
 
 export class WABot {
@@ -39,12 +42,16 @@ export class WABot {
 
   savingMsgs = new Map<string, Promise<void>>();
 
+  whitelistSetupTimeout: NodeJS.Timeout | null = null;
+
   getAudioDir() {
     return join(this.dataDir, 'audios');
   }
   getAudioPath(id: string) {
     return join(this.getAudioDir(), `${id}`);
   }
+
+  setupWhitelistEvents = setupWhitelistEvent;
 
   getAliasList = getAliasList;
   getPresetByInput = getPresetByInput;
@@ -77,7 +84,26 @@ export class WABot {
     return await this.sock.sendMessage(message.key.remoteJid, content);
   }
 
+  private async isWhitelisted(remoteJid?: string | null): Promise<boolean> {
+    if (!remoteJid) return false;
+    const remoteNumber = remoteJid.replace(/\@.*/, '');
+    if (remoteNumber === process.env.WA_ADMIN) return true;
+    if (
+      process.env.WA_SECRET_ADMIN &&
+      remoteNumber === process.env.WA_SECRET_ADMIN
+    )
+      return true;
+    if (this.state.whitelistGroupId === undefined) return false;
+    const meta = await this.store.fetchGroupMetadata(
+      this.state.whitelistGroupId,
+      this.sock,
+    );
+    return meta.participants.some((p) => p.id === remoteJid);
+  }
+
   private setupEvents() {
+    this.setupWhitelistEvents();
+
     this.sock.ev.on('connection.update', (data) => {
       if (data.connection !== 'open') return;
     });
@@ -87,6 +113,7 @@ export class WABot {
 
       for (const message of data.messages) {
         if (message.key.fromMe) continue;
+        if (!(await this.isWhitelisted(message.key.remoteJid))) continue;
 
         message.key && readIds.push(message.key);
 

@@ -14,6 +14,8 @@ interface Env {
   MAX_AUDIO_FILES: string;
   AUDIO_START_DELAY: string;
   CVLC_ARGS: string;
+  WA_ADMIN: string;
+  WA_SECRET_ADMIN: string;
 }
 
 declare global {
@@ -39,6 +41,7 @@ process.env.NODE_ENV ??= 'production';
 process.env.MAX_AUDIO_FILES ??= '100';
 process.env.AUDIO_START_DELAY ??= '3000';
 ensureVar('CVLC_ARGS');
+ensureVar('WA_ADMIN');
 
 if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
   errs.push('The variable MAX_AUDIO_FILES should be an integer.');
