@@ -8,6 +8,10 @@ export class Player {
 
   constructor(public ahConn: AHConn) {}
 
+  isPlaying() {
+    return this.playing !== null;
+  }
+
   async playAudio(
     preset: number,
     file: string,

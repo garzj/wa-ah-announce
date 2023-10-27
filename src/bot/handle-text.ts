@@ -14,6 +14,6 @@ export async function handleTextMsg(
 
   return await this.answer(
     message,
-    'Please reply to an audio message or use !help.',
+    'Please send me an audio message or use !help.',
   );
 }

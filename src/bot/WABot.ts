@@ -19,12 +19,25 @@ import { handleCommand } from './handle-command';
 import { handleTextMsg } from './handle-text';
 import { handleAudioMsg } from './handle-audio';
 import { writeFile } from 'fs/promises';
-import { getRoomList, getPresetByInput, setRoom, deleteRoom } from './rooms';
+import {
+  getRoomList,
+  getRoomPreset,
+  setRoom,
+  deleteRoom,
+  roomExists,
+} from './rooms';
 import { setupWhitelistEvent } from './whitelist';
 import { writeFileSync } from 'fs';
+import { handleRoomPoll as handleRoomPoll } from './handle-room-poll';
+import { sendRoomPoll } from './send-room-poll';
+import { stopAudio } from './stop-audio';
 
 export interface BotState {
   rooms: Record<string, number>;
+  curPoll?: {
+    key: proto.IMessageKey;
+    audioFile: string;
+  };
   whitelistGroupId?: string;
   whitelistSetupJid?: string;
 }
@@ -43,6 +56,7 @@ export class WABot {
 
   savingMsgs = new Map<string, Promise<void>>();
 
+  static readonly STOP_ROOM_NAME = 'Stop';
   whitelistSetupTimeout: NodeJS.Timeout | null = null;
 
   getAudioDir() {
@@ -54,8 +68,11 @@ export class WABot {
 
   setupWhitelistEvents = setupWhitelistEvent;
 
+  stopAudio = stopAudio;
+
+  roomExists = roomExists;
   getRoomList = getRoomList;
-  getPresetByInput = getPresetByInput;
+  getRoomPreset = getRoomPreset;
   setRoom = setRoom;
   deleteRoom = deleteRoom;
 
@@ -63,6 +80,8 @@ export class WABot {
   handleExtendedTextMsg = handleExtendedTextMsg;
   handleTextMsg = handleTextMsg;
   handleCommand = handleCommand;
+  handleRoomPool = handleRoomPoll;
+  sendRoomPoll = sendRoomPoll;
 
   async getMessage(key: WAMessageKey) {
     const msg = await this.store.loadMessage(key.remoteJid!, key.id!);
@@ -70,19 +89,21 @@ export class WABot {
   }
 
   async answer(
-    message: proto.IWebMessageInfo,
+    remote: proto.IWebMessageInfo | string | null | undefined,
     _content: AnyMessageContent | string,
   ) {
     const content =
       typeof _content === 'string' ? { text: _content } : _content;
-    if (!message.key.remoteJid) {
-      this.errLog(message);
+    const remoteJid =
+      typeof remote === 'object' ? remote?.key.remoteJid : remote;
+    if (!remoteJid) {
+      typeof remote === 'object' && this.errLog(remote);
       this.errLog(
-        `Could not resond to the message above. The remoteJid field is empty.`,
+        `Could not resond to a message. The remoteJid field is empty.`,
       );
       return;
     }
-    return await this.sock.sendMessage(message.key.remoteJid, content);
+    return await this.sock.sendMessage(remoteJid, content);
   }
 
   private async isWhitelisted(remoteJid?: string | null): Promise<boolean> {
@@ -107,6 +128,16 @@ export class WABot {
 
     this.sock.ev.on('connection.update', (data) => {
       if (data.connection !== 'open') return;
+    });
+
+    this.sock.ev.on('messages.update', async (ev) => {
+      for (const { key, update } of ev) {
+        if (!this.isWhitelisted(key.remoteJid)) continue;
+
+        if (update.pollUpdates) {
+          this.handleRoomPool(key, update);
+        }
+      }
     });
 
     this.sock.ev.on('messages.upsert', async (data) => {
@@ -281,7 +312,7 @@ export class WABot {
     this.writeStoreAndState(true);
 
     if (this.sock) {
-    this.sock.end(undefined);
+      this.sock.end(undefined);
     }
   }
 }

@@ -26,22 +26,5 @@ export async function handleExtendedTextMsg(
     );
   }
 
-  const preset =
-    typeof extended.text === 'string'
-      ? this.getPresetByInput(extended.text)
-      : undefined;
-  if (preset === undefined) {
-    return await this.answer(
-      message,
-      "Invalid room or preset specified. Won't play audio.",
-    );
-  }
-
-  const suc = await this.player.playAudio(preset, audioFile);
-  await this.answer(
-    message,
-    suc
-      ? `Playing audio on ${extended.text}.`
-      : `Failed to play audio with preset ${preset}.`,
-  );
+  await this.sendRoomPoll(message.key.remoteJid!, audioFile);
 }

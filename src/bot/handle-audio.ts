@@ -23,7 +23,10 @@ export async function handleAudioMsg(
       reuploadRequest: this.sock.updateMediaMessage,
     },
   );
-  await writeFile(this.getAudioPath(id), stream);
+  const audioFile = this.getAudioPath(id);
+  await writeFile(audioFile, stream);
+
+  await this.sendRoomPoll(message.key.remoteJid!, audioFile);
 
   // Delete old media
   const files = await readdir(this.getAudioDir());

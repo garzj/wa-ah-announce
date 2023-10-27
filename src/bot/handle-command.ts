@@ -11,21 +11,24 @@ export async function handleCommand(
     await this.answer(
       message,
       'Possible commands are:' +
-        '\n!help' +
-        '\n!stop' +
-        '\n!room' +
-        '\n!whitelist' +
-        '\n\nTo make an announcement, reply to media in this chat with the number of a preset or a room name.',
+        '\n!help:        \tShow this list' +
+        '\n!stop:        \tStop playing any audio' +
+        '\n!room:        \tMap room names to presets' +
+        '\n!whitelist:   \tSetup or show whitelisted numbers' +
+        '\n\nTo play some audio, send me an audio message or reply to one with a "."',
     );
   } else if (cmd === 'stop') {
-    await this.player.stopPlaying();
-    await this.answer(message, 'Stopped playing audio.');
+    await this.stopAudio(message.key.remoteJid!);
   } else if (cmd === 'room') {
     if (args[0] === 'list') {
       const list = this.getRoomList(args[1]);
       return await this.answer(
         message,
-        list === '' ? 'Found no rooms.' : 'Found rooms:\n' + list,
+        list === ''
+          ? 'No rooms found.'
+          : args[1] === undefined
+          ? 'Rooms: \n' + list
+          : 'Found room:\n' + list,
       );
     } else if (args[0] === 'set') {
       const room = args[1];

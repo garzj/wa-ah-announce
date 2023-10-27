@@ -1,27 +1,22 @@
 import { WABot } from './WABot';
 
-export function getRoomList(this: WABot, roomInput?: string) {
-  const room = roomInput && parseRoom(roomInput);
+export function roomExists(this: WABot, room: string) {
+  return Object.prototype.hasOwnProperty.call(this.state.rooms, room);
+}
+
+export function getRoomList(this: WABot, room?: string) {
   return Object.entries(this.state.rooms)
     .filter(([a]) => room === undefined || room === a)
-    .map(([room, preset]) => `${room}: ${preset}`)
+    .map(([room, preset]) => `${room} -> ${preset}`)
     .join('\n');
 }
 
-export function getPresetByInput(
-  this: WABot,
-  input: string,
-): number | undefined {
+export function getRoomPreset(this: WABot, input: string): number | undefined {
   let preset = parsePreset(input);
   if (preset !== undefined) return preset;
 
-  const room = parseRoom(input);
-  preset = this.state.rooms[room];
+  preset = this.state.rooms[input];
   return preset;
-}
-
-function parseRoom(input: string) {
-  return input.toLowerCase();
 }
 
 function parsePreset(input: string): number | undefined {
@@ -33,20 +28,18 @@ function parsePreset(input: string): number | undefined {
 
 export function setRoom(
   this: WABot,
-  input: string,
+  room: string,
   presetInput: string,
 ): boolean {
+  if (room === WABot.STOP_ROOM_NAME) return false;
   const preset = parsePreset(presetInput);
   if (preset === undefined) return false;
-  const room = parseRoom(input);
   this.state.rooms[room] = preset;
   return true;
 }
 
-export function deleteRoom(this: WABot, input: string): boolean {
-  const room = parseRoom(input);
-  if (!Object.prototype.hasOwnProperty.call(this.state.rooms, input))
-    return false;
+export function deleteRoom(this: WABot, room: string): boolean {
+  if (!this.roomExists(room)) return false;
   delete this.state.rooms[room];
   return true;
 }
