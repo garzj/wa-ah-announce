@@ -1,6 +1,5 @@
 import { proto } from '@whiskeysockets/baileys';
 import { WABot } from './WABot';
-import { deleteAlias, getAliasList, setAlias } from '../config/aliases';
 
 export async function handleCommand(
   this: WABot,
@@ -22,7 +21,7 @@ export async function handleCommand(
     await this.answer(message, 'Stopped playing audio.');
   } else if (cmd === 'alias') {
     if (args[0] === 'list') {
-      const list = getAliasList(args[1]);
+      const list = this.getAliasList(args[1]);
       return await this.answer(
         message,
         list === '' ? 'Found no aliases.' : 'Found aliases:\n' + list,
@@ -31,7 +30,7 @@ export async function handleCommand(
       const alias = args[1];
       const preset = args[2];
       if (alias !== undefined && preset !== undefined) {
-        const suc = setAlias(alias, preset);
+        const suc = this.setAlias(alias, preset);
         return await this.answer(
           message,
           suc ? 'Saved alias.' : 'This alias is invalid.',
@@ -40,7 +39,7 @@ export async function handleCommand(
     } else if (args[0] === 'remove' || args[0] === 'delete') {
       const alias = args[1];
       if (alias !== undefined) {
-        const suc = deleteAlias(alias);
+        const suc = this.deleteAlias(alias);
         return await this.answer(
           message,
           suc ? 'Removed alias.' : "The specified alias doesn't exist.",

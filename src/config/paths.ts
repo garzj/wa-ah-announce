@@ -15,8 +15,3 @@ function ensureDirSync(dir: string) {
 
 export const dataDir = process.env.DATA_DIR;
 ensureDirSync(dataDir);
-
-export const aliasesFile = join(process.env.DATA_DIR, 'aliases.json');
-
-export const audioDir = join(dataDir, 'audios');
-ensureDirSync(audioDir);

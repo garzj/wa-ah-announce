@@ -1,7 +1,6 @@
 import { proto } from '@whiskeysockets/baileys';
 import { WABot } from './WABot';
 import { exists } from '../config/paths';
-import { getPresetByInput } from '../config/aliases';
 
 export async function handleExtendedTextMsg(
   this: WABot,
@@ -30,7 +29,7 @@ export async function handleExtendedTextMsg(
 
   const preset =
     typeof extended.text === 'string'
-      ? getPresetByInput(extended.text)
+      ? this.getPresetByInput(extended.text)
       : undefined;
   if (preset === undefined) {
     return await this.answer(

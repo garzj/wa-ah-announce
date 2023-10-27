@@ -8,28 +8,48 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import { prefixedErr, prefixedLog } from '../config/logger';
-import { mkdir } from 'fs/promises';
+import { mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import pino from 'pino';
-import { audioDir } from '../config/paths';
+import { exists } from '../config/paths';
 import { Player } from '../Player';
 import { handleExtendedTextMsg } from './handle-text-extended';
 import { handleCommand } from './handle-command';
 import { handleTextMsg } from './handle-text';
 import { handleAudioMsg } from './handle-audio';
+import { NoParamCallback, writeFile } from 'fs';
+import {
+  getAliasList,
+  getPresetByInput,
+  setAlias,
+  deleteAlias,
+} from './aliases';
+
+export interface BotState {
+  aliases: Record<string, number>;
+}
 
 export class WABot {
   logger = pino({ level: 'silent' });
   sock!: ReturnType<typeof makeWASocket>;
   meId!: string;
-  storeSaveInterval: NodeJS.Timeout | null = null;
   store!: ReturnType<typeof makeInMemoryStore>;
+  state!: BotState;
+  private saveInterval: NodeJS.Timeout | null = null;
 
   savingMsgs = new Map<string, Promise<void>>();
 
-  getAudioPath(id: string) {
-    return join(audioDir, `${id}`);
+  getAudioDir() {
+    return join(this.dataDir, 'audios');
   }
+  getAudioPath(id: string) {
+    return join(this.getAudioDir(), `${id}`);
+  }
+
+  getAliasList = getAliasList;
+  getPresetByInput = getPresetByInput;
+  setAlias = setAlias;
+  deleteAlias = deleteAlias;
 
   handleAudioMsg = handleAudioMsg;
   handleExtendedTextMsg = handleExtendedTextMsg;
@@ -91,12 +111,16 @@ export class WABot {
     });
   }
 
-  static async new(prefix: string, player: Player) {
-    const bot = new WABot(prefix, player);
+  static async new(prefix: string, player: Player, dataDir?: string) {
+    const bot = new WABot(prefix, player, dataDir);
     await bot.setupSocket();
     return bot;
   }
-  private constructor(public prefix: string, public player: Player) {}
+  private constructor(
+    public prefix: string,
+    public player: Player,
+    private dataDir = join(process.env.DATA_DIR, prefix),
+  ) {}
 
   log(...data: any[]) {
     prefixedLog(this.prefix, ...data);
@@ -106,25 +130,51 @@ export class WABot {
     prefixedErr(this.prefix, ...data);
   }
 
-  async setupSocket() {
-    const storeFile = join(
-      process.env.DATA_DIR,
-      'baileys',
-      `${this.prefix}-store.json`,
-    );
-    if (this.store) {
-      if (this.storeSaveInterval !== null) {
-        clearInterval(this.storeSaveInterval);
-        this.storeSaveInterval = null;
+  private writeStoreAndState(storeFile: string, stateFile: string) {
+    const errCb: NoParamCallback = (err) => {
+      if (!err) return;
+      this.errLog(`Warning: Failed to save state or store: ${err}`);
+    };
+    this.store &&
+      writeFile(storeFile, JSON.stringify(this.store.toJSON()), errCb);
+    this.state && writeFile(stateFile, JSON.stringify(this.state), errCb);
+  }
+
+  private async reloadStoreAndState() {
+    const storeFile = join(this.dataDir, `store.json`);
+    const stateFile = join(this.dataDir, `state.json`);
+
+    if (this.store || this.state) {
+      if (this.saveInterval !== null) {
+        clearInterval(this.saveInterval);
+        this.saveInterval = null;
       }
-      this.store.writeToFile(storeFile);
+      this.writeStoreAndState(storeFile, stateFile);
     }
 
+    this.store = makeInMemoryStore({ logger: this.logger });
+    if (await exists(storeFile)) {
+      this.store.fromJSON(JSON.parse((await readFile(storeFile)).toString()));
+    }
+    this.store.bind(this.sock.ev);
+
+    if (await exists(stateFile)) {
+      this.state = JSON.parse((await readFile(stateFile)).toString());
+    } else {
+      this.state = { aliases: {} };
+    }
+
+    this.saveInterval = setInterval(() => {
+      this.writeStoreAndState(storeFile, stateFile);
+    }, 10_000);
+  }
+
+  async setupSocket() {
     if (this.sock) {
       this.sock.end(undefined);
     }
 
-    const authDir = join(process.env.DATA_DIR, 'baileys', this.prefix);
+    const authDir = join(this.dataDir, `baileys`);
     await mkdir(authDir, { recursive: true });
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
@@ -136,12 +186,7 @@ export class WABot {
     });
     this.sock.ev.on('creds.update', saveCreds);
 
-    this.store = makeInMemoryStore({ logger: this.logger });
-    this.store.readFromFile(storeFile);
-    this.storeSaveInterval = setInterval(() => {
-      this.store?.writeToFile(storeFile);
-    });
-    this.store.bind(this.sock.ev);
+    this.reloadStoreAndState();
 
     this.setupEvents();
 
