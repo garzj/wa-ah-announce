@@ -21,8 +21,9 @@ import { handleAudioMsg } from './handle-audio';
 export class WABot {
   logger = pino({ level: 'silent' });
   sock!: ReturnType<typeof makeWASocket>;
+  meId!: string;
   storeSaveInterval: NodeJS.Timeout | null = null;
-  store: ReturnType<typeof makeInMemoryStore> | null = null;
+  store!: ReturnType<typeof makeInMemoryStore>;
 
   savingMsgs = new Map<string, Promise<void>>();
 
@@ -36,11 +37,8 @@ export class WABot {
   handleCommand = handleCommand;
 
   async getMessage(key: WAMessageKey) {
-    if (this.store) {
-      const msg = await this.store.loadMessage(key.remoteJid!, key.id!);
-      return msg?.message || undefined;
-    }
-    return proto.Message.fromObject({});
+    const msg = await this.store.loadMessage(key.remoteJid!, key.id!);
+    return msg?.message || undefined;
   }
 
   async answer(
@@ -169,10 +167,15 @@ export class WABot {
         );
         if (loggedOut) return;
 
-        // this.connect();
         this.setupSocket();
       } else if (connection === 'open') {
         this.log('Connection opened.');
+
+        if (!this.sock.user) {
+          this.errLog('No user object on socket after login? Exiting');
+          return;
+        }
+        this.meId = this.sock.user.id;
 
         this.sock.sendPresenceUpdate('unavailable');
       }
