@@ -294,8 +294,6 @@ export class WABot {
           return;
         }
         this.meId = jidNormalizedUser(this.sock.user.id);
-
-        this.sock.sendPresenceUpdate('unavailable');
       }
     });
   }
