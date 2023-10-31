@@ -242,6 +242,7 @@ export class WABot {
     if (this.destroyed) return;
 
     if (this.sock) {
+      this.sock.ev.removeAllListeners('connection.update');
       this.sock.end(undefined);
     }
 
