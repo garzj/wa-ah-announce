@@ -199,12 +199,21 @@ export class WABot {
     prefixedErr(this.prefix, ...data);
   }
 
-  private async writeStoreAndState(sync = false) {
-    const write = sync ? writeFileSync : writeFile;
+  private writeStoreAndStateSync() {
     try {
       this.store &&
-        (await write(this.storeFile, JSON.stringify(this.store.toJSON())));
-      this.state && (await write(this.stateFile, JSON.stringify(this.state)));
+        writeFileSync(this.storeFile, JSON.stringify(this.store.toJSON()));
+      this.state && writeFileSync(this.stateFile, JSON.stringify(this.state));
+    } catch (err) {
+      this.errLog(`Warning: Failed to save state or store: ${err}`);
+    }
+  }
+  private async writeStoreAndState() {
+    try {
+      this.store &&
+        (await writeFile(this.storeFile, JSON.stringify(this.store.toJSON())));
+      this.state &&
+        (await writeFile(this.stateFile, JSON.stringify(this.state)));
     } catch (err) {
       this.errLog(`Warning: Failed to save state or store: ${err}`);
     }
@@ -330,7 +339,7 @@ export class WABot {
     process.off('uncaughtException', this.onProcExit);
 
     this.whitelistSetupTimeout && clearTimeout(this.whitelistSetupTimeout);
-    this.writeStoreAndState(true);
+    this.writeStoreAndStateSync();
 
     if (this.sock) {
       this.sock.end(undefined);
