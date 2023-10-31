@@ -225,7 +225,7 @@ export class WABot {
         clearInterval(this.saveInterval);
         this.saveInterval = null;
       }
-      this.writeStoreAndState();
+      await this.writeStoreAndState();
     }
 
     this.store = makeInMemoryStore({ logger: this.logger });
