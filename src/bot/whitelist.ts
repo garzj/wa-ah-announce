@@ -16,7 +16,6 @@ export function setupWhitelistEvent(this: WABot) {
   });
 
   this.sock.ev.on('group-participants.update', async (ev) => {
-    console.log(ev, this.meId, this.state);
     if (ev.action !== 'remove') return;
     if (!ev.participants.includes(this.meId)) return;
     if (ev.id !== this.state.whitelistGroupId) return;
