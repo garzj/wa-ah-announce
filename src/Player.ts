@@ -24,13 +24,16 @@ export class Player {
 
     this.stopPlaying();
 
+    console.log('spawn timeout set');
     this.playing = setTimeout(() => {
       // todo: sanitize
+      console.log('child process spawned');
       this.playing = spawn('sh', [
         '-c',
         `/usr/bin/cvlc ${resolve(file)} ${process.env.CVLC_ARGS}`,
       ]);
       this.playing.on('exit', () => {
+        console.log('child process exited by itself');
         this.playing = null;
       });
     }, startDelay);
@@ -42,9 +45,14 @@ export class Player {
     if (this.playing === null) return;
 
     if (!(this.playing instanceof ChildProcess)) {
+      console.log('spawn timeout cleared');
       clearTimeout(this.playing);
     } else {
       this.playing.removeAllListeners();
+      console.log('child process killed');
+      this.playing.on('exit', () =>
+        console.log('child process exited after kill signal'),
+      );
       this.playing.kill();
     }
 
