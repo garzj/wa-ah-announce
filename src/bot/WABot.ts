@@ -220,17 +220,25 @@ export class WABot {
     }
 
     this.store = makeInMemoryStore({ logger: this.logger });
-    if (await exists(this.storeFile)) {
-      this.store.fromJSON(
-        JSON.parse((await readFile(this.storeFile)).toString()),
-      );
-    }
     this.store.bind(this.sock.ev);
 
-    if (await exists(this.stateFile)) {
-      this.state = JSON.parse((await readFile(this.stateFile)).toString());
-    } else {
-      this.state = { rooms: {} };
+    this.state = { rooms: {} };
+
+    try {
+      if (await exists(this.storeFile)) {
+        this.store.fromJSON(
+          JSON.parse((await readFile(this.storeFile)).toString()),
+        );
+      }
+
+      if (await exists(this.stateFile)) {
+        this.state = JSON.parse((await readFile(this.stateFile)).toString());
+      }
+    } catch (e) {
+      this.errLog(e);
+      this.errLog(
+        `Error parsing state and store files. Will use default values.`,
+      );
     }
 
     this.saveInterval = setInterval(() => {
