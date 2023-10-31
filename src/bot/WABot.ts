@@ -238,7 +238,7 @@ export class WABot {
     }, 10_000);
   }
 
-  async setupSocket() {
+  async setupSocket(historySkipped = false) {
     if (this.destroyed) return;
 
     if (this.sock) {
@@ -255,21 +255,26 @@ export class WABot {
       printQRInTerminal: true,
       logger: this.logger,
       getMessage: this.getMessage.bind(this),
+      // shouldSyncHistoryMessage: () => process.env.WA_SKIP_HISTORY !== 'true', // does not work
     });
     this.sock.ev.on('creds.update', saveCreds);
 
     this.reloadStoreAndState();
 
-    this.setupEvents();
+    if (process.env.WA_SKIP_HISTORY !== 'true' || historySkipped) {
+      this.setupEvents();
+    }
 
-    this.setupConn();
+    this.setupConn(historySkipped);
   }
 
-  private setupConn() {
+  private setupConn(historySkipped = false) {
     this.sock.ev.on('connection.update', (update) => {
       if (this.destroyed) return;
 
-      const { connection, lastDisconnect } = update;
+      const { connection, lastDisconnect, receivedPendingNotifications } =
+        update;
+
       if (connection === 'close') {
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
 
@@ -295,6 +300,15 @@ export class WABot {
           return;
         }
         this.meId = jidNormalizedUser(this.sock.user.id);
+      }
+
+      if (
+        receivedPendingNotifications &&
+        process.env.WA_SKIP_HISTORY === 'true' &&
+        !historySkipped
+      ) {
+        this.log('Reconnecting to skip history.');
+        this.setupSocket(true);
       }
     });
   }

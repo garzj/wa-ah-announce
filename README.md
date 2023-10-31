@@ -29,6 +29,7 @@ MAX_AUDIO_FILES=100
 AUDIO_START_DELAY=3000
 
 # whatsapp
+WA_SKIP_HISTORY=false
 WA_ADMIN=1234567890
 
 # cvlc arguments (an audio file will be the first argument)

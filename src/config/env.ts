@@ -1,3 +1,5 @@
+import { PickByType } from '../util/ts';
+
 try {
   const dotenv = require('dotenv');
   dotenv.config();
@@ -14,6 +16,7 @@ interface Env {
   MAX_AUDIO_FILES: string;
   AUDIO_START_DELAY: string;
   CVLC_ARGS: string;
+  WA_SKIP_HISTORY?: 'true' | 'false';
   WA_ADMIN: string;
   WA_SECRET_ADMIN: string;
 }
@@ -32,6 +35,17 @@ function ensureVar(name: keyof Env) {
   }
 }
 
+function checkBool<
+  N extends keyof PickByType<Env, undefined | 'true' | 'false'>,
+>(name: N) {
+  if (!['true', 'false', undefined].includes((process.env as any)[name])) {
+    errs.push(
+      `The env variable ${name} has to be one either true, false or undefined.`,
+    );
+  }
+}
+
+checkBool('AH_MOCK');
 ensureVar('AH_HOST');
 process.env.AH_PORT ??= '51325';
 process.env.AH_USER ??= '';
@@ -41,6 +55,7 @@ process.env.NODE_ENV ??= 'production';
 process.env.MAX_AUDIO_FILES ??= '100';
 process.env.AUDIO_START_DELAY ??= '3000';
 ensureVar('CVLC_ARGS');
+checkBool('WA_SKIP_HISTORY');
 ensureVar('WA_ADMIN');
 
 if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
@@ -49,12 +64,6 @@ if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
 
 if (isNaN(parseInt(process.env.AUDIO_START_DELAY))) {
   errs.push('The variable AUDIO_START_DELAY should be an integer.');
-}
-
-if (!['true', 'false', undefined].includes(process.env.AH_MOCK)) {
-  errs.push(
-    'The variable AH_MOCK has to be one either true, false or undefined.',
-  );
 }
 
 if (process.env.AH_USER) {
