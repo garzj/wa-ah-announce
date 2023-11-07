@@ -339,6 +339,7 @@ export class WABot {
     process.off('uncaughtException', this.onProcExit);
 
     this.whitelistSetupTimeout && clearTimeout(this.whitelistSetupTimeout);
+    this.state.whitelistSetupJid = undefined
     this.writeStoreAndStateSync();
 
     if (this.sock) {
