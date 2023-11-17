@@ -31,11 +31,7 @@ export class Player {
       const cvlcCommand = `${process.env.CVLC_COMMAND} ${resolve(file)} ${
         process.env.CVLC_ARGS
       }`;
-      if (process.platform === 'win32') {
-        this.playing = spawn('cmd.exe', ['/k', cvlcCommand]);
-      } else {
-        this.playing = spawn('sh', ['-c', cvlcCommand]);
-      }
+      this.playing = spawn(cvlcCommand, [], { shell: true });
       this.playing.on('exit', () => {
         console.log('child process exited by itself');
         this.playing = null;
