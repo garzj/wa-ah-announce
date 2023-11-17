@@ -26,15 +26,14 @@ export class Player {
 
     console.log('spawn timeout set');
     this.playing = setTimeout(() => {
-      // todo: sanitize
       console.log('child process spawned');
       const cvlcCommand = `${process.env.CVLC_COMMAND} ${resolve(file)} ${
         process.env.CVLC_ARGS
       }`;
-      this.playing = spawn('cmd.exe', ['/c', cvlcCommand], {
-        shell: false,
-        windowsHide: true,
-      });
+      // todo: don't split quotes
+      const args = Array.from(cvlcCommand.match(/[^\s"']+|"([^"]*)"/gim) ?? []);
+      const cmd = args.shift()!;
+      this.playing = spawn(cmd, args);
       this.playing.on('exit', () => {
         console.log('child process exited by itself');
         this.playing = null;
