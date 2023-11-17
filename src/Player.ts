@@ -31,7 +31,9 @@ export class Player {
         process.env.CVLC_ARGS
       }`;
       // todo: don't split quotes
-      const args = Array.from(cvlcCommand.match(/[^\s"']+|"([^"]*)"/gim) ?? []);
+      const args = (cvlcCommand.match(/[^\s"']+|"([^"]*)"/gim) ?? []).map((x) =>
+        x.replace(/^(?:"|')(.*)(?:"|')$/, '$1'),
+      );
       const cmd = args.shift()!;
       this.playing = spawn(cmd, args);
       this.playing.on('exit', () => {
