@@ -1,5 +1,5 @@
 import { AHConn } from './AHConn';
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess, exec } from 'child_process';
 import { exists } from './config/paths';
 import { resolve } from 'path';
 
@@ -31,7 +31,7 @@ export class Player {
       const cvlcCommand = `${process.env.CVLC_COMMAND} ${resolve(file)} ${
         process.env.CVLC_ARGS
       }`;
-      this.playing = spawn(cvlcCommand, [], { shell: true });
+      this.playing = exec(cvlcCommand);
       this.playing.on('exit', () => {
         console.log('child process exited by itself');
         this.playing = null;
