@@ -15,6 +15,7 @@ interface Env {
   NODE_ENV: 'development' | 'production' | 'test';
   MAX_AUDIO_FILES: string;
   AUDIO_START_DELAY: string;
+  CVLC_COMMAND: string;
   CVLC_ARGS: string;
   WA_SKIP_HISTORY?: 'true' | 'false';
   WA_ADMIN: string;
@@ -54,6 +55,7 @@ process.env.DATA_DIR ??= './data';
 process.env.NODE_ENV ??= 'production';
 process.env.MAX_AUDIO_FILES ??= '100';
 process.env.AUDIO_START_DELAY ??= '3000';
+process.env.CVLC_COMMAND ??= '/usr/bin/cvlc';
 ensureVar('CVLC_ARGS');
 checkBool('WA_SKIP_HISTORY');
 ensureVar('WA_ADMIN');

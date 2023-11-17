@@ -28,10 +28,14 @@ export class Player {
     this.playing = setTimeout(() => {
       // todo: sanitize
       console.log('child process spawned');
-      this.playing = spawn('sh', [
-        '-c',
-        `/usr/bin/cvlc ${resolve(file)} ${process.env.CVLC_ARGS}`,
-      ]);
+      const cvlcCommand = `${process.env.CVLC_COMMAND} ${resolve(file)} ${
+        process.env.CVLC_ARGS
+      }`;
+      if (process.platform === 'win32') {
+        this.playing = spawn('cmd.exe', ['/k', cvlcCommand]);
+      } else {
+        this.playing = spawn('sh', ['-c', cvlcCommand]);
+      }
       this.playing.on('exit', () => {
         console.log('child process exited by itself');
         this.playing = null;
