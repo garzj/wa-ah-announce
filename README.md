@@ -36,6 +36,12 @@ WA_ADMIN=1234567890
 CVLC_ARGS="--sout '#transcode{vcodec=mp2v,vb=800,acodec=mpga,ab=128,channels=2,samplerate=48000,scodec=none}:rtp{dst=192.168.2.8,port=5004,mux=ts,sap,name=Announcement}' --no-sout-all --sout-keep"
 ```
 
+Add this env variable to use vlc on windows:
+
+```
+CVLC_COMMAND='"C:\Program Files\VideoLAN\VLC\vlc.exe" -I dummy --dummy-quiet'
+```
+
 ## Run the app
 
 ```
