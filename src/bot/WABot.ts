@@ -9,16 +9,14 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import { prefixedErr, prefixedLog } from '../config/logger';
-import { mkdir, readFile } from 'fs/promises';
+import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import pino from 'pino';
-import { exists } from '../config/paths';
 import { Player } from '../Player';
 import { handleExtendedTextMsg } from './handle-text-extended';
 import { handleCommand } from './handle-command';
 import { handleTextMsg } from './handle-text';
 import { handleAudioMsg } from './handle-audio';
-import { writeFile } from 'fs/promises';
 import {
   getRoomList,
   getRoomPreset,
@@ -27,7 +25,7 @@ import {
   roomExists,
 } from './rooms';
 import { setupWhitelistEvent } from './whitelist';
-import { writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { handleRoomPoll as handleRoomPoll } from './handle-room-poll';
 import { sendRoomPoll } from './send-room-poll';
 import { stopAudio } from './stop-audio';
@@ -208,16 +206,16 @@ export class WABot {
       this.errLog(`Warning: Failed to save state or store: ${err}`);
     }
   }
-  private async writeStoreAndState() {
-    try {
-      this.store &&
-        (await writeFile(this.storeFile, JSON.stringify(this.store.toJSON())));
-      this.state &&
-        (await writeFile(this.stateFile, JSON.stringify(this.state)));
-    } catch (err) {
-      this.errLog(`Warning: Failed to save state or store: ${err}`);
-    }
-  }
+  // private async writeStoreAndState() {
+  //   try {
+  //     this.store &&
+  //       (await writeFile(this.storeFile, JSON.stringify(this.store.toJSON())));
+  //     this.state &&
+  //       (await writeFile(this.stateFile, JSON.stringify(this.state)));
+  //   } catch (err) {
+  //     this.errLog(`Warning: Failed to save state or store: ${err}`);
+  //   }
+  // }
 
   private async reloadStoreAndState() {
     if (this.store || this.state) {
@@ -225,7 +223,7 @@ export class WABot {
         clearInterval(this.saveInterval);
         this.saveInterval = null;
       }
-      await this.writeStoreAndState();
+      this.writeStoreAndStateSync();
     }
 
     this.store = makeInMemoryStore({ logger: this.logger });
@@ -234,14 +232,14 @@ export class WABot {
     this.state = { rooms: {} };
 
     try {
-      if (await exists(this.storeFile)) {
+      if (existsSync(this.storeFile)) {
         this.store.fromJSON(
-          JSON.parse((await readFile(this.storeFile)).toString()),
+          JSON.parse(readFileSync(this.storeFile).toString()),
         );
       }
 
-      if (await exists(this.stateFile)) {
-        this.state = JSON.parse((await readFile(this.stateFile)).toString());
+      if (existsSync(this.stateFile)) {
+        this.state = JSON.parse(readFileSync(this.stateFile).toString());
       }
     } catch (e) {
       this.errLog(e);
@@ -251,7 +249,7 @@ export class WABot {
     }
 
     this.saveInterval = setInterval(() => {
-      this.writeStoreAndState();
+      this.writeStoreAndStateSync();
     }, 10_000);
   }
 
@@ -339,7 +337,7 @@ export class WABot {
     process.off('uncaughtException', this.onProcExit);
 
     this.whitelistSetupTimeout && clearTimeout(this.whitelistSetupTimeout);
-    this.state.whitelistSetupJid = undefined
+    this.state.whitelistSetupJid = undefined;
     this.writeStoreAndStateSync();
 
     if (this.sock) {
