@@ -24,9 +24,7 @@ export class Player {
 
     this.stopPlaying();
 
-    console.log('spawn timeout set');
     this.playing = setTimeout(() => {
-      console.log('child process spawned');
       const cvlcCommand = `${process.env.CVLC_COMMAND} ${resolve(file)} ${
         process.env.CVLC_ARGS
       }`;
@@ -37,7 +35,6 @@ export class Player {
       const cmd = args.shift()!;
       this.playing = spawn(cmd, args);
       this.playing.on('exit', () => {
-        console.log('child process exited by itself');
         this.playing = null;
       });
     }, startDelay);
@@ -53,9 +50,9 @@ export class Player {
       clearTimeout(this.playing);
     } else {
       this.playing.removeAllListeners();
-      console.log('child process killed');
+      console.log('Child process was killed due to timeout.');
       this.playing.on('exit', () =>
-        console.log('child process exited after kill signal'),
+        console.log('Child process exited after kill signal.'),
       );
       this.playing.kill();
     }
