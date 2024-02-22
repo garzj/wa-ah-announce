@@ -46,7 +46,7 @@ CVLC_ARGS="--sout '#transcode{vcodec=mp2v,vb=800,acodec=mpga,ab=128,channels=2,s
 
 #### Play audio on speaker (Windows)
 
-First, get the id of the Speaker:
+First, get the id of the Speaker (using `powershell`):
 
 ```powershell
 $AudioDeviceName="15-16"
