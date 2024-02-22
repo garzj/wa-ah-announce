@@ -31,6 +31,9 @@ AUDIO_START_DELAY=3000
 # whatsapp
 WA_SKIP_HISTORY=false
 WA_ADMIN=1234567890
+
+# should not contain any special characters (optional)
+BROWSER_NAME="Announcements Bot"
 ```
 
 #### Stream using RTP (Windows)
