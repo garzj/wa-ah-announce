@@ -1,5 +1,6 @@
 import makeWASocket, {
   AnyMessageContent,
+  Browsers,
   DisconnectReason,
   WAMessageKey,
   jidNormalizedUser,
@@ -270,6 +271,9 @@ export class WABot {
       printQRInTerminal: true,
       logger: this.logger,
       getMessage: this.getMessage.bind(this),
+      browser: process.env.BROWSER_NAME
+        ? [process.env.BROWSER_NAME, process.env.BROWSER_NAME, '4.0.0']
+        : Browsers.baileys('Baileys'),
       // shouldSyncHistoryMessage: () => process.env.WA_SKIP_HISTORY !== 'true', // does not work
     });
     this.sock.ev.on('creds.update', saveCreds);

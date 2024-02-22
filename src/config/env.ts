@@ -20,6 +20,7 @@ interface Env {
   WA_SKIP_HISTORY?: 'true' | 'false';
   WA_ADMIN: string;
   WA_SECRET_ADMIN: string;
+  BROWSER_NAME?: string;
 }
 
 declare global {
