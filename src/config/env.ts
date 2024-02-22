@@ -56,7 +56,7 @@ process.env.NODE_ENV ??= 'production';
 process.env.MAX_AUDIO_FILES ??= '100';
 process.env.AUDIO_START_DELAY ??= '3000';
 process.env.CVLC_COMMAND ??= '/usr/bin/cvlc';
-ensureVar('CVLC_ARGS');
+process.env.CVLC_ARGS ??= '';
 checkBool('WA_SKIP_HISTORY');
 ensureVar('WA_ADMIN');
 
