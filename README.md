@@ -31,6 +31,9 @@ AUDIO_START_DELAY=3000
 # whatsapp
 WA_SKIP_HISTORY=false
 WA_ADMIN=1234567890
+# (pairing codes don't work with a custom browser name)
+USE_PAIRING_CODE=false
+PAIRING_CODE_NO=1234567890
 
 # should not contain any special characters (optional)
 BROWSER_NAME="Announcements Bot"

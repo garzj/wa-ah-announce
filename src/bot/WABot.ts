@@ -4,6 +4,7 @@ import makeWASocket, {
   DisconnectReason,
   WAMessageKey,
   jidNormalizedUser,
+  makeCacheableSignalKeyStore,
   makeInMemoryStore,
   proto,
   useMultiFileAuthState,
@@ -30,6 +31,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { handleRoomPoll as handleRoomPoll } from './handle-room-poll';
 import { sendRoomPoll } from './send-room-poll';
 import { stopAudio } from './stop-audio';
+import NodeCache = require('node-cache');
 
 export interface BotState {
   rooms: Record<string, number>;
@@ -45,13 +47,16 @@ export class WABot {
   logger = pino({ level: 'silent' });
   sock!: ReturnType<typeof makeWASocket>;
   private destroyed = false;
-  private onProcExit: NodeJS.ExitListener;
+  private onProcExit: (...args: unknown[]) => void;
   meId!: string;
+  msgRetryCounterCache = new NodeCache();
   store!: ReturnType<typeof makeInMemoryStore>;
   state!: BotState;
   private storeFile = join(this.dataDir, `store.json`);
   private stateFile = join(this.dataDir, `state.json`);
   private saveInterval: NodeJS.Timeout | null = null;
+  private usePairingCode = process.env.USE_PAIRING_CODE === 'true';
+  private pairingCodeTimeout: NodeJS.Timeout | null = null;
 
   savingMsgs = new Map<string, Promise<void>>();
 
@@ -181,9 +186,11 @@ export class WABot {
     public player: Player,
     private dataDir = join(process.env.DATA_DIR, prefix),
   ) {
-    this.onProcExit = (no) => {
+    this.onProcExit = (...args) => {
       this.destroy();
-      process.exit(no);
+      args.forEach((arg) => typeof arg !== 'number' && console.error(arg));
+      args.forEach((arg) => typeof arg === 'number' && process.exit(arg));
+      process.exit();
     };
     process.on('exit', this.onProcExit);
     process.on('SIGINT', this.onProcExit);
@@ -267,14 +274,19 @@ export class WABot {
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
     this.sock = makeWASocket({
-      auth: state,
-      printQRInTerminal: true,
+      auth: {
+        creds: state.creds,
+        // keys: state.keys,
+        keys: makeCacheableSignalKeyStore(state.keys, this.logger),
+      },
+      printQRInTerminal: !this.usePairingCode,
       logger: this.logger,
       getMessage: this.getMessage.bind(this),
       browser: process.env.BROWSER_NAME
         ? [process.env.BROWSER_NAME, process.env.BROWSER_NAME, '4.0.0']
-        : Browsers.baileys('Baileys'),
+        : ['Chrome (Linux)', '', ''], // don't change when using pairing code auth!
       // shouldSyncHistoryMessage: () => process.env.WA_SKIP_HISTORY !== 'true', // does not work
+      msgRetryCounterCache: this.msgRetryCounterCache,
     });
     this.sock.ev.on('creds.update', saveCreds);
 
@@ -285,6 +297,19 @@ export class WABot {
     }
 
     this.setupConn(historySkipped);
+
+    if (this.pairingCodeTimeout !== null) {
+      clearTimeout(this.pairingCodeTimeout);
+      this.pairingCodeTimeout = null;
+    }
+    if (this.usePairingCode && !this.sock.authState.creds.registered) {
+      const no = process.env.PAIRING_CODE_NO!;
+      this.log(`Requesting pairing code for number: ${no}`);
+      this.pairingCodeTimeout = setTimeout(async () => {
+        const code = await this.sock.requestPairingCode(no);
+        this.log(`Pairing code: ${code.match(/.{1,4}/g)?.join('-')}`);
+      }, 3000);
+    }
   }
 
   private setupConn(historySkipped = false) {
@@ -343,6 +368,8 @@ export class WABot {
     this.whitelistSetupTimeout && clearTimeout(this.whitelistSetupTimeout);
     this.state.whitelistSetupJid = undefined;
     this.writeStoreAndStateSync();
+
+    this.pairingCodeTimeout !== null && clearTimeout(this.pairingCodeTimeout);
 
     if (this.sock) {
       this.sock.end(undefined);

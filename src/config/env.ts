@@ -21,6 +21,8 @@ interface Env {
   WA_ADMIN: string;
   WA_SECRET_ADMIN: string;
   BROWSER_NAME?: string;
+  USE_PAIRING_CODE?: 'true' | 'false';
+  PAIRING_CODE_NO?: string;
 }
 
 declare global {
@@ -60,6 +62,10 @@ process.env.CVLC_COMMAND ??= '/usr/bin/cvlc';
 process.env.CVLC_ARGS ??= '';
 checkBool('WA_SKIP_HISTORY');
 ensureVar('WA_ADMIN');
+checkBool('USE_PAIRING_CODE');
+if (process.env.USE_PAIRING_CODE === 'true') {
+  ensureVar('PAIRING_CODE_NO');
+}
 
 if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
   errs.push('The variable MAX_AUDIO_FILES should be an integer.');
