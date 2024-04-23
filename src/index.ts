@@ -19,7 +19,6 @@ const player = new Player(ahConn);
 (async () => {
   const bot = await WABot.new('wa-bot', player);
   bot.on('err-exit', (err) => {
-    console.error('Bot exited due to', err);
-    process.exit(1);
+    throw err;
   });
 })();
