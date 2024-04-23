@@ -32,6 +32,7 @@ import { handleRoomPoll as handleRoomPoll } from './handle-room-poll';
 import { sendRoomPoll } from './send-room-poll';
 import { stopAudio } from './stop-audio';
 import NodeCache = require('node-cache');
+import EventEmitter = require('events');
 
 export interface BotState {
   rooms: Record<string, number>;
@@ -43,7 +44,7 @@ export interface BotState {
   whitelistSetupJid?: string;
 }
 
-export class WABot {
+export class WABot extends EventEmitter {
   logger = pino({ level: 'silent' });
   sock!: ReturnType<typeof makeWASocket>;
   private destroyed = false;
@@ -186,6 +187,7 @@ export class WABot {
     public player: Player,
     private dataDir = join(process.env.DATA_DIR, prefix),
   ) {
+    super();
     this.onProcExit = (...args) => {
       this.destroy();
       args.forEach((arg) => typeof arg !== 'number' && console.error(arg));
@@ -312,6 +314,10 @@ export class WABot {
     }
   }
 
+  errExit(err: Error) {
+    this.emit('err-exit');
+  }
+
   private setupConn(historySkipped = false) {
     this.sock.ev.on('connection.update', (update) => {
       if (this.destroyed) return;
@@ -327,24 +333,29 @@ export class WABot {
         }
 
         const loggedOut = statusCode === DisconnectReason.loggedOut;
+        const err =
+          lastDisconnect?.error ??
+          new Error(`Disconnected due to code ${DisconnectReason}.`);
         this.errLog(
           'Connection closed due to ',
-          lastDisconnect?.error,
+          err,
           ',',
           loggedOut ? "won't reconnect." : 'reconnecting.',
         );
-        if (loggedOut) return;
+        if (loggedOut) return this.errExit(err);
 
-        this.setupSocket();
-      } else if (connection === 'open') {
-        this.log('Connection opened.');
-
-        if (!this.sock.user) {
-          this.errLog('No user object on socket after login? Exiting');
-          return;
-        }
-        this.meId = jidNormalizedUser(this.sock.user.id);
+        return this.setupSocket();
+      } else if (connection !== 'open') {
+        return;
       }
+      this.log('Connection opened.');
+
+      if (!this.sock.user) {
+        const err = new Error('No user object on socket after login? Exiting');
+        this.errLog(err);
+        return this.errExit(err);
+      }
+      this.meId = jidNormalizedUser(this.sock.user.id);
 
       if (
         receivedPendingNotifications &&
