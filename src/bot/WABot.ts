@@ -33,6 +33,7 @@ import { sendRoomPoll } from './send-room-poll';
 import { stopAudio } from './stop-audio';
 import * as _NodeCache from 'node-cache';
 import { EventEmitter } from 'events';
+import { env } from '../config/env';
 // @ts-ignore
 const NodeCache = _NodeCache.default;
 
@@ -58,7 +59,7 @@ export class WABot extends EventEmitter {
   private storeFile: string;
   private stateFile: string;
   private saveInterval: NodeJS.Timeout | null = null;
-  private usePairingCode = process.env.USE_PAIRING_CODE === 'true';
+  private usePairingCode = env.USE_PAIRING_CODE === 'true';
   private pairingCodeTimeout: NodeJS.Timeout | null = null;
 
   savingMsgs = new Map<string, Promise<void>>();
@@ -116,11 +117,8 @@ export class WABot extends EventEmitter {
   private async isWhitelisted(remoteJid?: string | null): Promise<boolean> {
     if (!remoteJid) return false;
     const remoteNumber = remoteJid.replace(/\@.*/, '');
-    if (remoteNumber === process.env.WA_ADMIN) return true;
-    if (
-      process.env.WA_SECRET_ADMIN &&
-      remoteNumber === process.env.WA_SECRET_ADMIN
-    )
+    if (remoteNumber === env.WA_ADMIN) return true;
+    if (env.WA_SECRET_ADMIN && remoteNumber === env.WA_SECRET_ADMIN)
       return true;
     if (this.state.whitelistGroupId === undefined) return false;
     const meta = await this.store.fetchGroupMetadata(
@@ -187,7 +185,7 @@ export class WABot extends EventEmitter {
   private constructor(
     public prefix: string,
     public player: Player,
-    private dataDir = join(process.env.DATA_DIR, prefix),
+    private dataDir = join(env.DATA_DIR, prefix),
   ) {
     super();
     this.storeFile = join(this.dataDir, `store.json`);
@@ -288,17 +286,17 @@ export class WABot extends EventEmitter {
       printQRInTerminal: !this.usePairingCode,
       logger: this.logger as any,
       getMessage: this.getMessage.bind(this),
-      browser: process.env.BROWSER_NAME
-        ? [process.env.BROWSER_NAME, process.env.BROWSER_NAME, '4.0.0']
+      browser: env.BROWSER_NAME
+        ? [env.BROWSER_NAME, env.BROWSER_NAME, '4.0.0']
         : ['Chrome (Linux)', '', ''], // don't change when using pairing code auth!
-      // shouldSyncHistoryMessage: () => process.env.WA_SKIP_HISTORY !== 'true', // does not work
+      // shouldSyncHistoryMessage: () => env.WA_SKIP_HISTORY !== 'true', // does not work
       msgRetryCounterCache: this.msgRetryCounterCache,
     });
     this.sock.ev.on('creds.update', saveCreds);
 
     this.reloadStoreAndState();
 
-    if (process.env.WA_SKIP_HISTORY !== 'true' || historySkipped) {
+    if (env.WA_SKIP_HISTORY !== 'true' || historySkipped) {
       this.setupEvents();
     }
 
@@ -309,7 +307,7 @@ export class WABot extends EventEmitter {
       this.pairingCodeTimeout = null;
     }
     if (this.usePairingCode && !this.sock.authState.creds.registered) {
-      const no = process.env.PAIRING_CODE_NO!;
+      const no = env.PAIRING_CODE_NO!;
       this.log(`Requesting pairing code for number: ${no}`);
       this.pairingCodeTimeout = setTimeout(async () => {
         const code = await this.sock.requestPairingCode(no);
@@ -363,7 +361,7 @@ export class WABot extends EventEmitter {
 
       if (
         receivedPendingNotifications &&
-        process.env.WA_SKIP_HISTORY === 'true' &&
+        env.WA_SKIP_HISTORY === 'true' &&
         !historySkipped
       ) {
         this.log('Reconnecting to skip history.');

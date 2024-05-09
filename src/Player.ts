@@ -2,6 +2,7 @@ import { AHConn } from './AHConn';
 import { ChildProcess, spawn } from 'child_process';
 import { exists } from './config/paths';
 import { resolve } from 'path';
+import { env } from './config/env';
 
 export class Player {
   playing: NodeJS.Timeout | ChildProcess | null = null;
@@ -15,7 +16,7 @@ export class Player {
   async playAudio(
     preset: number,
     file: string,
-    startDelay = parseInt(process.env.AUDIO_START_DELAY),
+    startDelay = parseInt(env.AUDIO_START_DELAY),
   ): Promise<boolean> {
     if (!(await exists(file))) return false;
     if (preset < 1 || preset > 500) return false;
@@ -25,8 +26,8 @@ export class Player {
     this.stopPlaying();
 
     this.playing = setTimeout(() => {
-      const cvlcCommand = `${process.env.CVLC_COMMAND} ${resolve(file)} ${
-        process.env.CVLC_ARGS
+      const cvlcCommand = `${env.CVLC_COMMAND} ${resolve(file)} ${
+        env.CVLC_ARGS
       }`;
       // todo: don't split quotes
       const args = (

@@ -1,6 +1,7 @@
 import { Socket } from 'net';
 import { prefixedErr, prefixedLog } from './config/logger';
 import { TypedEmitter } from 'tiny-typed-emitter';
+import { env } from './config/env';
 
 interface Events {
   authed: () => void;
@@ -19,7 +20,7 @@ export class AHConn extends TypedEmitter<Events> {
 
   writePreset?: () => void;
   recallPreset(preset: number) {
-    if (process.env.AH_MOCK === 'true') {
+    if (env.AH_MOCK === 'true') {
       return this.log(`Preset ${preset} has been recalled.`);
     }
 
@@ -99,7 +100,7 @@ export class AHConn extends TypedEmitter<Events> {
       }
     });
 
-    if (process.env.AH_MOCK === 'true') {
+    if (env.AH_MOCK === 'true') {
       this.log(
         "Won't connect to the Dante receiver, because AH_MOCK has been set.",
       );

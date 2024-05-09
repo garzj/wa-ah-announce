@@ -1,10 +1,5 @@
 import { PickByType } from '../util/ts';
 
-try {
-  const dotenv = await import('dotenv');
-  dotenv.config();
-} catch {}
-
 interface Env {
   AH_MOCK?: 'true' | 'false';
   AH_HOST: string;
@@ -25,16 +20,17 @@ interface Env {
   PAIRING_CODE_NO?: string;
 }
 
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv extends Env {}
-  }
-}
+let _env = {};
+try {
+  const dotenv = await import('dotenv');
+  dotenv.config({ processEnv: _env });
+} catch {}
+const env: Env = _env as any;
 
 const errs: string[] = [];
 
 function ensureVar(name: keyof Env) {
-  if (typeof process.env[name] !== 'string') {
+  if (typeof env[name] !== 'string') {
     errs.push(`The env variable ${name} has not been set, but is required.`);
   }
 }
@@ -42,7 +38,7 @@ function ensureVar(name: keyof Env) {
 function checkBool<
   N extends keyof PickByType<Env, undefined | 'true' | 'false'>,
 >(name: N) {
-  if (!['true', 'false', undefined].includes((process.env as any)[name])) {
+  if (!['true', 'false', undefined].includes((env as any)[name])) {
     errs.push(
       `The env variable ${name} has to be one either true, false or undefined.`,
     );
@@ -51,32 +47,32 @@ function checkBool<
 
 checkBool('AH_MOCK');
 ensureVar('AH_HOST');
-process.env.AH_PORT ??= '51325';
-process.env.AH_USER ??= '';
-process.env.AH_PASSWORD ??= '';
-process.env.DATA_DIR ??= './data';
-process.env.NODE_ENV ??= 'production';
-process.env.MAX_AUDIO_FILES ??= '100';
-process.env.AUDIO_START_DELAY ??= '3000';
-process.env.CVLC_COMMAND ??= '/usr/bin/cvlc';
-process.env.CVLC_ARGS ??= '';
+env.AH_PORT ??= '51325';
+env.AH_USER ??= '';
+env.AH_PASSWORD ??= '';
+env.DATA_DIR ??= './data';
+env.NODE_ENV ??= 'production';
+env.MAX_AUDIO_FILES ??= '100';
+env.AUDIO_START_DELAY ??= '3000';
+env.CVLC_COMMAND ??= '/usr/bin/cvlc';
+env.CVLC_ARGS ??= '';
 checkBool('WA_SKIP_HISTORY');
 ensureVar('WA_ADMIN');
 checkBool('USE_PAIRING_CODE');
-if (process.env.USE_PAIRING_CODE === 'true') {
+if (env.USE_PAIRING_CODE === 'true') {
   ensureVar('PAIRING_CODE_NO');
 }
 
-if (isNaN(parseInt(process.env.MAX_AUDIO_FILES))) {
+if (isNaN(parseInt(env.MAX_AUDIO_FILES))) {
   errs.push('The variable MAX_AUDIO_FILES should be an integer.');
 }
 
-if (isNaN(parseInt(process.env.AUDIO_START_DELAY))) {
+if (isNaN(parseInt(env.AUDIO_START_DELAY))) {
   errs.push('The variable AUDIO_START_DELAY should be an integer.');
 }
 
-if (process.env.AH_USER) {
-  const user = parseInt(process.env.AH_USER);
+if (env.AH_USER) {
+  const user = parseInt(env.AH_USER);
   if (isNaN(user) || user < 0 || user > 31) {
     errs.push(`The variable AH_USER has to be a value from 0 to 31 inclusive.`);
   }
@@ -89,4 +85,4 @@ if (errs.length > 0) {
   process.exit(1);
 }
 
-export {};
+export { env };

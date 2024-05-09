@@ -1,6 +1,7 @@
 import { downloadMediaMessage, proto } from '@whiskeysockets/baileys';
 import { WABot } from './WABot';
 import { readdir, stat, unlink, writeFile } from 'fs/promises';
+import { env } from '../config/env';
 
 export async function handleAudioMsg(
   this: WABot,
@@ -31,7 +32,7 @@ export async function handleAudioMsg(
 
   // Delete old media
   const files = await readdir(this.getAudioDir());
-  if (files.length > parseInt(process.env.MAX_AUDIO_FILES)) {
+  if (files.length > parseInt(env.MAX_AUDIO_FILES)) {
     let oldestTime: Date | undefined;
     let oldestFile: string | null = null;
     await Promise.all(
