@@ -1,6 +1,6 @@
-import makeWASocket, {
+import {
+  makeWASocket,
   AnyMessageContent,
-  Browsers,
   DisconnectReason,
   WAMessageKey,
   jidNormalizedUser,
@@ -31,8 +31,10 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { handleRoomPoll as handleRoomPoll } from './handle-room-poll';
 import { sendRoomPoll } from './send-room-poll';
 import { stopAudio } from './stop-audio';
-import NodeCache = require('node-cache');
-import EventEmitter = require('events');
+import * as _NodeCache from 'node-cache';
+import { EventEmitter } from 'events';
+// @ts-ignore
+const NodeCache = _NodeCache.default;
 
 export interface BotState {
   rooms: Record<string, number>;
@@ -377,7 +379,7 @@ export class WABot extends EventEmitter {
     process.off('uncaughtException', this.onProcExit);
 
     this.whitelistSetupTimeout && clearTimeout(this.whitelistSetupTimeout);
-    this.state.whitelistSetupJid = undefined;
+    this.state && (this.state.whitelistSetupJid = undefined);
     this.writeStoreAndStateSync();
 
     this.pairingCodeTimeout !== null && clearTimeout(this.pairingCodeTimeout);
