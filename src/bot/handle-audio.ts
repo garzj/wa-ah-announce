@@ -17,7 +17,7 @@ export async function handleAudioMsg(
       'stream',
       {},
       {
-        logger: this.logger,
+        logger: this.logger as any,
         reuploadRequest: this.sock.updateMediaMessage,
       },
     );

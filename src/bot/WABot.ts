@@ -55,8 +55,8 @@ export class WABot extends EventEmitter {
   msgRetryCounterCache = new NodeCache();
   store!: ReturnType<typeof makeInMemoryStore>;
   state!: BotState;
-  private storeFile = join(this.dataDir, `store.json`);
-  private stateFile = join(this.dataDir, `state.json`);
+  private storeFile: string;
+  private stateFile: string;
   private saveInterval: NodeJS.Timeout | null = null;
   private usePairingCode = process.env.USE_PAIRING_CODE === 'true';
   private pairingCodeTimeout: NodeJS.Timeout | null = null;
@@ -190,6 +190,8 @@ export class WABot extends EventEmitter {
     private dataDir = join(process.env.DATA_DIR, prefix),
   ) {
     super();
+    this.storeFile = join(this.dataDir, `store.json`);
+    this.stateFile = join(this.dataDir, `state.json`);
     this.onProcExit = (...args) => {
       this.destroy();
       args.forEach((arg) => typeof arg !== 'number' && console.error(arg));
@@ -238,7 +240,7 @@ export class WABot extends EventEmitter {
       this.writeStoreAndStateSync();
     }
 
-    this.store = makeInMemoryStore({ logger: this.logger });
+    this.store = makeInMemoryStore({ logger: this.logger as any });
     this.store.bind(this.sock.ev);
 
     this.state = { rooms: {} };
@@ -281,10 +283,10 @@ export class WABot extends EventEmitter {
       auth: {
         creds: state.creds,
         // keys: state.keys,
-        keys: makeCacheableSignalKeyStore(state.keys, this.logger),
+        keys: makeCacheableSignalKeyStore(state.keys, this.logger as any),
       },
       printQRInTerminal: !this.usePairingCode,
-      logger: this.logger,
+      logger: this.logger as any,
       getMessage: this.getMessage.bind(this),
       browser: process.env.BROWSER_NAME
         ? [process.env.BROWSER_NAME, process.env.BROWSER_NAME, '4.0.0']
