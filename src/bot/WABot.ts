@@ -360,7 +360,8 @@ export class WABot extends EventEmitter {
       this.meId = jidNormalizedUser(this.sock.user.id);
 
       if (
-        receivedPendingNotifications &&
+        (receivedPendingNotifications ||
+          receivedPendingNotifications === undefined) &&
         env.WA_SKIP_HISTORY === 'true' &&
         !historySkipped
       ) {
