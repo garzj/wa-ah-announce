@@ -1,7 +1,7 @@
 import { PickByType } from '../util/ts';
 
 try {
-  const dotenv = require('dotenv');
+  const dotenv = await import('dotenv');
   dotenv.config();
 } catch {}
 
