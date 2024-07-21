@@ -1,3 +1,7 @@
+# DEPRECATED
+
+I rewrote this using the Telegram API for stability. [Here](https://github.com/garzj/tg-voice-relay) is the new repo.
+
 # wa-ah-announce
 
 This application forwards audio announcements received per WhatsApp to an Allen & Heath AHM device letting the user pick a room to play them.
